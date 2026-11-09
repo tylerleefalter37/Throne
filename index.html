@@ -1,0 +1,3185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Throne and Plow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Throne&Plow">
+  <style>
+    :root {
+      --bg: #08090d;
+      --card-bg: #10141d;
+      --card-surface: #171d2a;
+      --card-border: #1e283b;
+      --card-border-focus: #38bdf8;
+      
+      /* High-Contrast Obsidian & Cyan Palette (Zero Red, Zero Blue/Yellow combos) */
+      --text-main: #f1f5f9;
+      --text-muted: #8191a6;
+      --cyan: #38bdf8;
+      --cyan-soft: rgba(56, 189, 248, 0.12);
+      --cyan-bright: #7dd3fc;
+      --mint: #34d399;
+      --mint-soft: rgba(52, 211, 153, 0.12);
+      --silver: #cbd5e1;
+      --charcoal: #1e293b;
+      --status-neutral: #94a3b8;
+      
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 12px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "SF Pro Text", monospace;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    /* TOP SOVEREIGN HUD */
+    #crown-hud {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 8px 12px;
+      padding-top: max(8px, var(--safe-top));
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 50;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .hud-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+    }
+
+    .hud-title {
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      font-size: 11px;
+    }
+
+    .hud-stat {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hud-stat span.label {
+      color: var(--text-muted);
+      font-size: 10px;
+      text-transform: uppercase;
+    }
+
+    .hud-stat span.val {
+      color: var(--text-main);
+      font-weight: 700;
+      font-family: ui-monospace, "SF Mono", monospace;
+    }
+
+    .hud-stat span.val.cyan { color: var(--cyan); }
+    .hud-stat span.val.mint { color: var(--mint); }
+    .hud-stat span.val.silver { color: var(--silver); }
+
+    /* VIEWPORT CONTAINER */
+    #viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .view-panel {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .view-panel.active {
+      display: flex;
+    }
+
+    /* CARDS & CONTAINERS */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--cyan);
+      font-weight: 700;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* DUAL MAP SURFACES */
+    .map-surface-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: #000;
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 8px;
+    }
+
+    .map-layer-selector {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .map-canvas-container {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      aspect-ratio: 1;
+      background: #050608;
+      border: 1px solid var(--charcoal);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    /* BUTTONS & CONTROLS */
+    .btn {
+      background: var(--card-surface);
+      color: var(--text-main);
+      border: 1px solid var(--card-border);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .btn:active {
+      background: var(--cyan-soft);
+      border-color: var(--cyan);
+    }
+
+    .btn-sm {
+      min-height: 32px;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .btn-cyan {
+      background: var(--cyan);
+      color: #040810;
+      font-weight: 700;
+      border-color: var(--cyan);
+    }
+
+    .btn-cyan:active {
+      background: var(--cyan-bright);
+    }
+
+    .btn-mint {
+      background: var(--mint-soft);
+      color: var(--mint);
+      border-color: var(--mint);
+      font-weight: 600;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-group-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    /* ROSTERS & TABLES */
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-cyan { background: var(--cyan-soft); color: var(--cyan); }
+    .badge-mint { background: var(--mint-soft); color: var(--mint); }
+    .badge-silver { background: rgba(203, 213, 225, 0.1); color: var(--silver); }
+
+    /* EVENT & ROYAL LOGS */
+    #sovereign-log-stream {
+      font-family: ui-monospace, "SF Mono", monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 4px;
+      max-height: 140px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .log-entry {
+      color: var(--text-muted);
+      border-left: 2px solid var(--card-border);
+      padding-left: 6px;
+    }
+
+    .log-entry.royal {
+      color: var(--cyan-bright);
+      border-left-color: var(--cyan);
+    }
+
+    .log-entry.harvest {
+      color: var(--mint);
+      border-left-color: var(--mint);
+    }
+
+    .log-entry.notice {
+      color: var(--silver);
+      border-left-color: var(--silver);
+    }
+
+    /* BOTTOM DOCK NAVIGATION */
+    #sovereign-dock {
+      background: var(--card-bg);
+      border-top: 1px solid var(--card-border);
+      padding: 6px 4px;
+      padding-bottom: max(6px, var(--safe-bottom));
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      z-index: 50;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .dock-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 9px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 5px 0;
+      border-radius: 6px;
+      min-height: 44px;
+      justify-content: center;
+    }
+
+    .dock-tab.active {
+      color: var(--cyan);
+      background: var(--cyan-soft);
+      font-weight: 700;
+    }
+
+    .dock-tab-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP SOVEREIGN HUD -->
+  <header id="crown-hud">
+    <div class="hud-row">
+      <div class="hud-title">Throne &amp; Plow</div>
+      <div class="hud-stat">
+        <span class="label">Reign:</span>
+        <span class="val cyan" id="hud-season-year">Spring, Year 1</span>
+      </div>
+      <div class="hud-stat">
+        <span class="label">Renown:</span>
+        <span class="val mint" id="hud-renown">Tithe Lord (0)</span>
+      </div>
+    </div>
+    <div class="hud-row" style="margin-top: 2px;">
+      <div class="hud-stat"><span class="label">Treasury:</span> <span class="val silver" id="hud-gold">150g</span></div>
+      <div class="hud-stat"><span class="label">Granary:</span> <span class="val cyan" id="hud-grain">320b</span></div>
+      <div class="hud-stat"><span class="label">Stone:</span> <span class="val" id="hud-stone">80</span></div>
+      <div class="hud-stat"><span class="label">Timber:</span> <span class="val" id="hud-timber">120</span></div>
+      <div class="hud-stat"><span class="label">Serfs:</span> <span class="val mint" id="hud-serfs">14</span></div>
+    </div>
+  </header>
+
+  <!-- MAIN SCROLLABLE VIEWPORT -->
+  <main id="viewport">
+
+    <!-- PANEL 1: KEEP MAP (LOCAL CASTLE GRID) -->
+    <section id="panel-keep" class="view-panel active">
+      <div class="card">
+        <div class="card-header">
+          <span>The Keep Grid (16×16)</span>
+          <span id="active-z-label" class="badge badge-cyan">Z: 0 (The Bailey)</span>
+        </div>
+        
+        <div class="map-surface-wrapper">
+          <div class="map-layer-selector">
+            <button class="btn btn-sm" onclick="App.setZLevel(-2)">Z: -2 Undercroft</button>
+            <button class="btn btn-sm" onclick="App.setZLevel(-1)">Z: -1 Vaults</button>
+            <button class="btn btn-sm btn-cyan" onclick="App.setZLevel(0)">Z: 0 Bailey</button>
+            <button class="btn btn-sm" onclick="App.setZLevel(1)">Z: +1 Walk</button>
+            <button class="btn btn-sm" onclick="App.setZLevel(2)">Z: +2 Spires</button>
+          </div>
+          <div class="map-canvas-container">
+            <canvas id="keepCanvas" width="360" height="360"></canvas>
+          </div>
+        </div>
+
+        <div id="keep-tile-inspector" style="font-size: 11px; line-height: 1.4; color: var(--text-muted);">
+          Tap any grid square to inspect foundation stones, fields, or curtain walls.
+        </div>
+      </div>
+
+      <button class="btn btn-cyan" onclick="App.advanceTurn()" style="font-size: 13px; font-weight: 700;">
+        Advance Reign (+1 Week)
+      </button>
+
+      <div class="card">
+        <div class="card-header">Sovereign Chronicle &amp; Ledger</div>
+        <div id="sovereign-log-stream">
+          <div class="log-entry royal">• The foundation stones of the frontier keep are blessed by royal decree.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 2: REALM MAP (OVERLAND EXPANSION) -->
+    <section id="panel-realm" class="view-panel">
+      <div class="card">
+        <div class="card-header">
+          <span>The Sovereign Realm (8×8)</span>
+          <span class="badge badge-mint" id="realm-holdings-count">Holdings: 1/64</span>
+        </div>
+        <div class="map-surface-wrapper">
+          <div class="map-canvas-container">
+            <canvas id="realmCanvas" width="360" height="360"></canvas>
+          </div>
+        </div>
+        <div id="realm-inspector" style="font-size: 11px; line-height: 1.4; color: var(--text-muted);">
+          Select an overland province to survey trade routes, mineral wealth, or decree Crown annexation.
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 3: DEMESNE & AGRARIAN CROPS -->
+    <section id="panel-demesne" class="view-panel">
+      <div class="card">
+        <div class="card-header">Three-Field Agrarian Rotation</div>
+        <div id="demesne-content">
+          <!-- Populated by Chunk 2 -->
+          <div style="font-size: 12px; color: var(--text-muted);">Awaiting crop rotation engine...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 4: CORVÉE & SERF ROSTER -->
+    <section id="panel-serfs" class="view-panel">
+      <div class="card">
+        <div class="card-header">Labor Hierarchy &amp; Crown Tithes</div>
+        <div id="serfs-content">
+          <!-- Populated by Chunk 2 -->
+          <div style="font-size: 12px; color: var(--text-muted);">Awaiting serf labor registers...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 5: CROWN VENTURES & ENTERPRISES -->
+    <section id="panel-ventures" class="view-panel">
+      <div class="card">
+        <div class="card-header">Guildhalls &amp; Commercial Charters</div>
+        <div id="ventures-content">
+          <!-- Populated by Chunk 4 -->
+          <div style="font-size: 12px; color: var(--text-muted);">Awaiting guild charter ledgers...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 6: CASTELLAN'S CODEX (MANUAL) -->
+    <section id="panel-codex" class="view-panel">
+      <div class="card">
+        <div class="card-header">Castellan's Field Codex</div>
+        <div id="codex-content">
+          <!-- Populated by Chunk 5 -->
+          <div style="font-size: 12px; color: var(--text-muted);">Awaiting royal chronicles and architectural rules...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 7: GOD-TIER SOVEREIGN CONSOLE -->
+    <section id="panel-god" class="view-panel">
+      <div class="card" style="border-color: var(--cyan);">
+        <div class="card-header" style="color: var(--cyan);">The Divine Royal Console</div>
+        <div id="god-content">
+          <!-- Populated by Chunk 5 -->
+          <div style="font-size: 12px; color: var(--text-muted);">Awaiting sovereign god-mode directives...</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM TOUCH DOCK NAVIGATION -->
+  <nav id="sovereign-dock">
+    <button class="dock-tab active" onclick="App.switchTab('keep')">
+      <div class="dock-tab-icon">⛯</div>
+      <span>Keep</span>
+    </button>
+    <button class="dock-tab" onclick="App.switchTab('realm')">
+      <div class="dock-tab-icon">🗺</div>
+      <span>Realm</span>
+    </button>
+    <button class="dock-tab" onclick="App.switchTab('demesne')">
+      <div class="dock-tab-icon">🌾</div>
+      <span>Plow</span>
+    </button>
+    <button class="dock-tab" onclick="App.switchTab('serfs')">
+      <div class="dock-tab-icon">⚒</div>
+      <span>Serfs</span>
+    </button>
+    <button class="dock-tab" onclick="App.switchTab('ventures')">
+      <div class="dock-tab-icon">🏛</div>
+      <span>Guilds</span>
+    </button>
+    <button class="dock-tab" onclick="App.switchTab('codex')">
+      <div class="dock-tab-icon">📜</div>
+      <span>Codex</span>
+    </button>
+    <button class="dock-tab" onclick="App.switchTab('god')">
+      <div class="dock-tab-icon">⚡</div>
+      <span>Crown</span>
+    </button>
+  </nav>
+
+<script>
+/**
+ * THRONE AND PLOW: CORE ENGINE CONTROLLER
+ * Zero external dependencies. Single-file execution.
+ */
+const App = {
+  currentZ: 0,
+  activeTab: 'keep',
+
+  // Core Web Audio Synthesizer Hook
+  Audio: {
+    ctx: null,
+    init() {
+      if (!this.ctx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+      }
+    },
+    playTone(freq, type = 'sine', duration = 0.08, gainVal = 0.05) {
+      try {
+        this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+      } catch(e) {}
+    },
+    click() { this.playTone(480, 'triangle', 0.04, 0.03); },
+    chime() { this.playTone(660, 'sine', 0.25, 0.06); },
+    stone() { this.playTone(130, 'square', 0.08, 0.04); }
+  },
+
+  switchTab(tabId) {
+    this.Audio.click();
+    this.activeTab = tabId;
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.dock-tab').forEach(b => b.classList.remove('active'));
+    
+    const targetPanel = document.getElementById(`panel-${tabId}`);
+    if (targetPanel) targetPanel.classList.add('active');
+    
+    const tabs = ['keep', 'realm', 'demesne', 'serfs', 'ventures', 'codex', 'god'];
+    const tabIdx = tabs.indexOf(tabId);
+    if (tabIdx >= 0) {
+      document.querySelectorAll('.dock-tab')[tabIdx].classList.add('active');
+    }
+  },
+
+  setZLevel(z) {
+    this.Audio.stone();
+    this.currentZ = z;
+    const labels = {
+      '-2': 'Z: -2 (Deep Undercroft)',
+      '-1': 'Z: -1 (Storage Vaults)',
+      '0': 'Z: 0 (The Bailey & Demesne)',
+      '1': 'Z: +1 (Wallwalk & Parapets)',
+      '2': 'Z: +2 (High Spires & Towers)'
+    };
+    const lbl = document.getElementById('active-z-label');
+    if (lbl) lbl.innerText = labels[z] || `Z: ${z}`;
+
+    document.querySelectorAll('.map-layer-selector button').forEach((btn, idx) => {
+      btn.classList.toggle('btn-cyan', idx === (z + 2));
+    });
+
+    if (window.KeepRenderer) window.KeepRenderer.render();
+  },
+
+  log(text, type = 'notice') {
+    const stream = document.getElementById('sovereign-log-stream');
+    if (!stream) return;
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.innerText = `• ${text}`;
+    stream.prepend(entry);
+    if (stream.children.length > 30) stream.removeChild(stream.lastChild);
+  },
+
+  advanceTurn() {
+    this.Audio.chime();
+    if (window.SimulationEngine) {
+      window.SimulationEngine.advance();
+    } else {
+      this.log("Turn passed. Waiting for Simulation Engine injection...", "royal");
+    }
+  }
+};
+
+/* ==========================================================================
+   MODULE INJECTION PLACEHOLDERS (DO NOT MODIFY THESE 5 LINES)
+   ========================================================================== */
+/* ==========================================================================
+   CHUNK 1: DATA MODELS, CATALOGS & PROCEDURAL AUDIO
+   ========================================================================== */
+
+// --- 1. PROCEDURAL SOUND SYNTHESIZER ---
+App.Audio = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+  },
+  playTone(freq, type = 'sine', duration = 0.08, gainVal = 0.05) {
+    try {
+      this.init();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch(e) {}
+  },
+  click() { this.playTone(520, 'triangle', 0.03, 0.02); },
+  chime() { this.playTone(660, 'sine', 0.22, 0.05); },
+  stoneThud() {
+    try {
+      this.init();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.12);
+    } catch(e) {}
+  },
+  hammerClink() {
+    this.playTone(1200, 'triangle', 0.06, 0.04);
+    setTimeout(() => this.playTone(1800, 'sine', 0.04, 0.02), 20);
+  },
+  harvestRustle() {
+    try {
+      this.init();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const bufferSize = this.ctx.sampleRate * 0.08;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1) * 0.03;
+      }
+      const whiteNoise = this.ctx.createBufferSource();
+      whiteNoise.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 850;
+      whiteNoise.connect(filter);
+      filter.connect(this.ctx.destination);
+      whiteNoise.start();
+    } catch(e) {}
+  },
+  goldCoins() {
+    this.playTone(987.77, 'sine', 0.08, 0.04); // B5
+    setTimeout(() => this.playTone(1318.51, 'sine', 0.12, 0.05), 50); // E6
+  },
+  royalFanfare() {
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    notes.forEach((freq, idx) => {
+      setTimeout(() => this.playTone(freq, 'triangle', 0.2, 0.06), idx * 110);
+    });
+  }
+};
+
+// --- 2. MASTER GAME STATE SCHEMA ---
+window.CrownState = {
+  meta: {
+    version: "1.0.0",
+    reignName: "Throne and Plow",
+    rulerTitle: "Castellan Sovereign",
+    year: 1,
+    seasonIdx: 0, // 0: Spring, 1: Summer, 2: Autumn, 3: Winter
+    weekTick: 1,  // 1 to 4 per season
+    totalWeeks: 1
+  },
+  treasury: {
+    gold: 180,
+    grain: 340,
+    dressedStone: 85,
+    timber: 130,
+    ironBloom: 20,
+    wool: 15,
+    honey: 10,
+    ale: 25
+  },
+  crown: {
+    renownPoints: 0,
+    prestigeTier: "Tithe Lord",
+    contentment: 88,     // 0-100%
+    sovereignFavor: 50,  // Diplomatic sway
+    activeCharters: 1
+  },
+  taxation: {
+    grainTithePct: 12,   // % of peasant yield demanded by keep
+    hearthTaxGold: 1,    // Gold coins per serf household per season
+    corveeDaysOwed: 3,   // Unpaid weekly labor days (1-6)
+    marketTollPct: 5     // Toll on guild exports
+  },
+  granary: {
+    maxCapacity: 600,
+    spoilageRate: 0.02,
+    hasStoneCellar: false,
+    verminInfestation: 0.05
+  },
+  selectedKeepTile: null,
+  selectedRealmProvince: null
+};
+
+// --- 3. FIVE-TIER VERTICAL ARCHITECTURAL CATALOG ---
+window.TILE_CATALOG = {
+  // === LEVEL -2: DEEP UNDERCROFT ===
+  vault_floor: { id: "vault_floor", z: -2, name: "Excavated Stone Floor", glyph: "_", color: "#1e293b", buildable: true, cost: { stone: 2, gold: 1 } },
+  wine_vault: { id: "wine_vault", z: -2, name: "Royal Wine & Ale Cellar", glyph: "V", color: "#818cf8", bonus: "Slows luxury spoil by 50%", cost: { stone: 30, timber: 20, gold: 25 } },
+  cistern: { id: "cistern", z: -2, name: "Subterranean Rock Cistern", glyph: "O", color: "#38bdf8", bonus: "Drought immunity for keep", cost: { stone: 45, gold: 40 } },
+  treasury_vault: { id: "treasury_vault", z: -2, name: "Crown Treasury Strongroom", glyph: "$", color: "#fbbf24", bonus: "Secures tax gold", cost: { stone: 60, iron: 15, gold: 100 } },
+
+  // === LEVEL -1: VAULTS & STORAGE ===
+  cellar_dirt: { id: "cellar_dirt", z: -1, name: "Unexcavated Earth", glyph: "x", color: "#171a21", buildable: true, cost: { timber: 2 } },
+  stone_granary_base: { id: "stone_granary_base", z: -1, name: "Dry Stone Granary Vault", glyph: "G", color: "#38bdf8", bonus: "Doubles grain shelf-life", cost: { stone: 40, timber: 25, gold: 30 } },
+  larder_pit: { id: "larder_pit", z: -1, name: "Cold Meat & Root Larder", glyph: "L", color: "#34d399", bonus: "Preserves winter vegetables", cost: { stone: 25, timber: 15 } },
+  ancestral_crypt: { id: "ancestral_crypt", z: -1, name: "Crypt of Ancestors", glyph: "+", color: "#cbd5e1", bonus: "+5 Renown per season", cost: { stone: 50, gold: 60 } },
+
+  // === LEVEL 0: THE BAILEY & DEMESNE ===
+  loam: { id: "loam", z: 0, name: "Virgin Loam Soil", glyph: ".", color: "#1b212d", tillable: true, buildable: true },
+  tilled_field: { id: "tilled_field", z: 0, name: "Tilled Strip Field", glyph: '"', color: "#2d3748", tillable: true },
+  curtain_wall: { id: "curtain_wall", z: 0, name: "Ashlar Curtain Wall", glyph: "#", color: "#64748b", blocksLos: true, supportLevel: 1, cost: { stone: 15 } },
+  royal_keep: { id: "royal_keep", z: 0, name: "Great Hall & Keep", glyph: "K", color: "#38bdf8", blocksLos: true, supportLevel: 2, cost: { stone: 120, timber: 80, gold: 150 } },
+  smithy: { id: "smithy", z: 0, name: "Master Smithy", glyph: "S", color: "#94a3b8", bonus: "+15% tool durability", cost: { stone: 25, timber: 35, gold: 20 } },
+  threshing_barn: { id: "threshing_barn", z: 0, name: "Threshing Barn", glyph: "B", color: "#475569", bonus: "Accelerates harvest yields", cost: { timber: 40, stone: 10 } },
+  hovel: { id: "hovel", z: 0, name: "Cottar Thatched Hovel", glyph: "h", color: "#334155", bonus: "Houses 1 serf family", cost: { timber: 15, gold: 5 } },
+  pasture: { id: "pasture", z: 0, name: "Fallow Clover Pasture", glyph: "~", color: "#064e3b", bonus: "Restores soil fertility", tillable: true },
+
+  // === LEVEL +1: WALLWALK & PARAPETS ===
+  open_air_1: { id: "open_air_1", z: 1, name: "Open Sky", glyph: " ", color: "#000000", buildable: false },
+  rampart_walk: { id: "rampart_walk", z: 1, name: "Crenelated Wallwalk", glyph: "═", color: "#94a3b8", requiresBelow: "curtain_wall", cost: { stone: 10, timber: 10 } },
+  solar_chamber: { id: "solar_chamber", z: 1, name: "Lord's Solar & Council", glyph: "C", color: "#7dd3fc", requiresBelow: "royal_keep", cost: { stone: 30, timber: 40, gold: 50 } },
+  guard_turret: { id: "guard_turret", z: 1, name: "Watch Turret", glyph: "T", color: "#cbd5e1", requiresBelow: "curtain_wall", cost: { stone: 20 } },
+
+  // === LEVEL +2: HIGH SPIRES & TOWERS ===
+  open_air_2: { id: "open_air_2", z: 2, name: "High Stratum Air", glyph: " ", color: "#000000", buildable: false },
+  high_spire: { id: "high_spire", z: 2, name: "Grand Ashlar Spire", glyph: "▲", color: "#38bdf8", requiresBelow: "guard_turret", cost: { stone: 50, gold: 80 } },
+  astronomy_turret: { id: "astronomy_turret", z: 2, name: "Astronomy & Star Chamber", glyph: "✦", color: "#a7f3d0", requiresBelow: "solar_chamber", cost: { stone: 40, gold: 120 } },
+  rookery: { id: "rookery", z: 2, name: "Crown Herald Rookery", glyph: "R", color: "#94a3b8", requiresBelow: "solar_chamber", cost: { timber: 35, gold: 45 } }
+};
+
+// --- 4. THREE-FIELD CROP ROTATION CATALOG ---
+window.CROP_CATALOG = {
+  wheat: {
+    id: "wheat",
+    name: "Winter Wheat",
+    plantSeason: 2,    // Autumn
+    harvestSeason: 1,  // Summer
+    growthWeeks: 8,
+    nitrogenDrain: 0.25,
+    fertilityDrain: 0.20,
+    baseYieldBushels: 18,
+    marketValueGold: 0.6,
+    preferredSoil: "loam",
+    description: "Primary bread grain. Highest food density, heavy soil exhaustion."
+  },
+  rye: {
+    id: "rye",
+    name: "Winter Rye",
+    plantSeason: 2,    // Autumn
+    harvestSeason: 1,  // Summer
+    growthWeeks: 8,
+    nitrogenDrain: 0.15,
+    fertilityDrain: 0.12,
+    baseYieldBushels: 14,
+    marketValueGold: 0.45,
+    preferredSoil: "clay",
+    description: "Hardy frost-resistant cereal that thrives in thin or impoverished soil."
+  },
+  barley: {
+    id: "barley",
+    name: "Spring Barley",
+    plantSeason: 0,    // Spring
+    harvestSeason: 2,  // Autumn
+    growthWeeks: 6,
+    nitrogenDrain: 0.18,
+    fertilityDrain: 0.15,
+    baseYieldBushels: 16,
+    marketValueGold: 0.5,
+    preferredSoil: "loam",
+    description: "Essential malt grain for brewing keep ale and feeding draft animals."
+  },
+  peas: {
+    id: "peas",
+    name: "Field Peas (Legumes)",
+    plantSeason: 0,    // Spring
+    harvestSeason: 2,  // Autumn
+    growthWeeks: 6,
+    nitrogenDrain: -0.30, // Restores nitrogen to the earth
+    fertilityDrain: 0.05,
+    baseYieldBushels: 12,
+    marketValueGold: 0.4,
+    preferredSoil: "loam",
+    description: "Nitrogen-fixing pulses. Crucial rotation crop that heals exhausted soil."
+  },
+  fallow: {
+    id: "fallow",
+    name: "Resting Clover Pasture",
+    plantSeason: -1,
+    harvestSeason: -1,
+    growthWeeks: 0,
+    nitrogenDrain: -0.15,
+    fertilityDrain: -0.25, // Regenerates organic matter
+    baseYieldBushels: 0,
+    marketValueGold: 0,
+    preferredSoil: "any",
+    description: "Resting soil grazed by sheep and cattle, naturally dunging and re-enriching the earth."
+  }
+};
+
+// --- 5. SERF CASTE & HOUSEHOLD ROSTERS ---
+window.SerfRoster = [
+  { id: "s1", name: "Wulfric Longplow", caste: "villein", task: "plant", health: 95, nourishment: 90, contentment: 85, draftOx: true, x: 2, y: 3, z: 0 },
+  { id: "s2", name: "Osric Stonebreaker", caste: "cottar", task: "quarry", health: 88, nourishment: 82, contentment: 78, draftOx: false, x: 5, y: 5, z: 0 },
+  { id: "s3", name: "Beda Woodhewer", caste: "cottar", task: "timber", health: 92, nourishment: 84, contentment: 80, draftOx: false, x: 6, y: 5, z: 0 },
+  { id: "s4", name: "Giles the Sower", caste: "villein", task: "plant", health: 90, nourishment: 88, contentment: 84, draftOx: true, x: 3, y: 3, z: 0 },
+  { id: "s5", name: "Algar Ditcher", caste: "cottar", task: "build", health: 85, nourishment: 79, contentment: 75, draftOx: false, x: 5, y: 6, z: 0 },
+  { id: "s6", name: "Dunstan of the Furrow", caste: "villein", task: "harvest", health: 94, nourishment: 89, contentment: 86, draftOx: true, x: 2, y: 4, z: 0 },
+  { id: "s7", name: "Kenelm Mason", caste: "artisan", task: "build", health: 96, nourishment: 95, contentment: 90, draftOx: false, x: 6, y: 6, z: 0 },
+  { id: "s8", name: "Eadwig Miller", caste: "artisan", task: "mill", health: 91, nourishment: 92, contentment: 88, draftOx: false, x: 3, y: 4, z: 0 },
+  { id: "s9", name: "Aldhelm Carter", caste: "cottar", task: "haul", health: 87, nourishment: 80, contentment: 77, draftOx: false, x: 4, y: 2, z: 0 },
+  { id: "s10", name: "Hilda Weaver", caste: "artisan", task: "craft", health: 93, nourishment: 90, contentment: 89, draftOx: false, x: 4, y: 3, z: 0 },
+  { id: "s11", name: "Godric Smith", caste: "artisan", task: "forge", health: 98, nourishment: 94, contentment: 92, draftOx: false, x: 7, y: 5, z: 0 },
+  { id: "s12", name: "Cenwulf Herdsman", caste: "villein", task: "herd", health: 89, nourishment: 86, contentment: 82, draftOx: true, x: 1, y: 5, z: 0 },
+  { id: "s13", name: "Morcar Thresher", caste: "cottar", task: "harvest", health: 86, nourishment: 81, contentment: 79, draftOx: false, x: 2, y: 5, z: 0 },
+  { id: "s14", name: "Aethelred Maltster", caste: "artisan", task: "brew", health: 94, nourishment: 92, contentment: 91, draftOx: false, x: 7, y: 6, z: 0 }
+];
+
+// --- 6. 64-PROVINCE OVERLAND REALM MATRIX (8×8 GRID) ---
+(function generateRealmProvinces() {
+  window.REALM_PROVINCES = {};
+  
+  const biomes = [
+    { type: "river_valley", name: "River Basin", boon: "+15% Grain Yield", icon: "≋", color: "#38bdf8", timber: 1, stone: 0, grain: 4, gold: 2 },
+    { type: "timberlands", name: "Ancient Forest", boon: "+20 Timber / Turn", icon: "♠", color: "#34d399", timber: 5, stone: 1, grain: 0, gold: 1 },
+    { type: "limestone_bluffs", name: "Limestone Crag", boon: "+15 Dressed Stone", icon: "▲", color: "#94a3b8", timber: 1, stone: 4, grain: 0, gold: 2 },
+    { type: "peat_bogs", name: "Peatlands", boon: "Fuel & Low Charter Cost", icon: "░", color: "#475569", timber: 2, stone: 1, grain: 1, gold: 1 },
+    { type: "fertile_lowlands", name: "Loam Vale", boon: "Prime Three-Field Acreage", icon: "🌾", color: "#a7f3d0", timber: 1, stone: 0, grain: 5, gold: 2 },
+    { type: "rolling_downs", name: "Shepherd Downs", boon: "+8 Wool & Livestock", icon: "⌒", color: "#cbd5e1", timber: 0, stone: 2, grain: 2, gold: 3 },
+    { type: "coastal_estuary", name: "Coastal Reach", boon: "+12 Commercial Gold", icon: "⚓", color: "#7dd3fc", timber: 2, stone: 0, grain: 2, gold: 5 },
+    { type: "royal_wood", name: "Crown Game Forest", boon: "+5 Sovereign Renown", icon: "♣", color: "#10b981", timber: 4, stone: 0, grain: 1, gold: 4 }
+  ];
+
+  const prefixes = ["Alden", "High", "Stone", "Deep", "Kings", "Silver", "Dun", "Broad", "Green", "Fair", "West", "North", "South", "East", "Cold", "Black"];
+  const suffixes = ["shire", "moor", "ridge", "vale", "reach", "ford", "basin", "crag", "fen", "wold", "downs", "wood", "dell", "haven", "mere", "stead"];
+
+  for (let ry = 0; ry < 8; ry++) {
+    for (let rx = 0; rx < 8; rx++) {
+      const idx = ry * 8 + rx;
+      const biome = biomes[(rx * 3 + ry * 5) % biomes.length];
+      const pName = `${prefixes[(rx * 7 + ry) % prefixes.length]} ${suffixes[(ry * 11 + rx) % suffixes.length]}`;
+      const isStartCapital = (rx === 3 && ry === 3);
+
+      window.REALM_PROVINCES[`${rx}_${ry}`] = {
+        x: rx,
+        y: ry,
+        id: `prov_${rx}_${ry}`,
+        name: isStartCapital ? "The Sovereign Keep (Capital)" : pName,
+        biome: biome.type,
+        biomeName: biome.name,
+        boon: biome.boon,
+        icon: isStartCapital ? "☗" : biome.icon,
+        color: isStartCapital ? "#38bdf8" : biome.color,
+        status: isStartCapital ? "annexed" : (Math.abs(rx - 3) <= 1 && Math.abs(ry - 3) <= 1 ? "surveyed" : "uncharted"),
+        charterCostGold: isStartCapital ? 0 : 80 + (Math.abs(rx - 3) + Math.abs(ry - 3)) * 40,
+        charterCostRenown: isStartCapital ? 0 : 20 + (Math.abs(rx - 3) + Math.abs(ry - 3)) * 15,
+        yields: {
+          timber: biome.timber,
+          stone: biome.stone,
+          grain: biome.grain,
+          gold: biome.gold
+        }
+      };
+    }
+  }
+})();
+
+// --- 7. LOCAL KEEP GRID 16×16 MATRIX INITIALIZER ---
+(function initKeepGridMatrix() {
+  window.KEEP_GRID = {};
+  for (let z = -2; z <= 2; z++) {
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const key = `${x}_${y}_${z}`;
+        let baseType = (z === 0) ? "loam" : ((z < 0) ? "cellar_dirt" : "open_air_" + z);
+        
+        // Initial Architectural Layout
+        if (z === 0) {
+          // Central Keep Fortress
+          if (x >= 6 && x <= 9 && y >= 6 && y <= 9) {
+            baseType = (x === 7 && y === 7) ? "royal_keep" : "curtain_wall";
+          }
+          // Eastern Three-Field Strip Acreage
+          else if (x >= 1 && x <= 4 && y >= 2 && y <= 13) {
+            baseType = "tilled_field";
+          }
+        } else if (z === -1) {
+          // Sub-surface foundations under keep
+          if (x >= 6 && x <= 9 && y >= 6 && y <= 9) {
+            baseType = "stone_granary_base";
+          }
+        }
+
+        window.KEEP_GRID[key] = {
+          x, y, z,
+          tileId: baseType,
+          soilFertility: 0.85,
+          soilNitrogen: 0.70,
+          crop: (z === 0 && x >= 1 && x <= 4 && y >= 2 && y <= 13) ? ((y % 2 === 0) ? "wheat" : "peas") : null,
+          growthStage: (z === 0 && x >= 1 && x <= 4 && y >= 2 && y <= 13) ? 3 : 0,
+          assignedSerfId: null
+        };
+      }
+    }
+  }
+})();
+/* ==========================================================================
+   CHUNK 2: SIMULATION & AGRARIAN ENGINE
+   ========================================================================== */
+
+window.SimulationEngine = {
+  // Season definitions
+  SEASONS: ["Spring", "Summer", "Autumn", "Winter"],
+  
+  // Renown Tiers
+  PRESTIGE_TIERS: [
+    { min: 0, title: "Tithe Lord" },
+    { min: 120, title: "Landed Thane" },
+    { min: 300, title: "High Castellan" },
+    { min: 650, title: "Baron Sovereign" },
+    { min: 1200, title: "Grand Monarch" }
+  ],
+
+  init() {
+    this.load();
+    this.updateHUD();
+    App.log("The manorial ledger is open. All lands and tithes accounted for.", "royal");
+  },
+
+  /* --- MASTER TURN TICK (Called by App.advanceTurn) --- */
+  advance() {
+    const C = window.CrownState;
+    
+    // 1. Advance Calendar (4 weeks per season, 4 seasons per year)
+    C.meta.weekTick += 1;
+    C.meta.totalWeeks += 1;
+    
+    let seasonShifted = false;
+    if (C.meta.weekTick > 4) {
+      C.meta.weekTick = 1;
+      C.meta.seasonIdx = (C.meta.seasonIdx + 1) % 4;
+      if (C.meta.seasonIdx === 0) {
+        C.meta.year += 1;
+        App.log(`A new year dawns. Year ${C.meta.year} of your sovereign reign.`, "royal");
+      }
+      seasonShifted = true;
+    }
+
+    const currentSeason = this.SEASONS[C.meta.seasonIdx];
+    if (seasonShifted) {
+      App.log(`The realm enters ${currentSeason}. The land shifts in response.`, "notice");
+      App.Audio.chime();
+    }
+
+    // 2. Resolve Agrarian & Crop Cycle
+    this.resolveAgriculture(currentSeason);
+
+    // 3. Resolve Labor Assignments & Resource Gathering
+    this.resolveLabor();
+
+    // 4. Resolve Granary Consumption & Spoilage
+    this.resolveGranary();
+
+    // 5. Resolve Feudal Taxation & Corvée Burden
+    this.resolveTaxation();
+
+    // 6. Calculate Sovereign Renown & Migration
+    this.resolveRenownAndPrestige();
+
+    // 7. Update HUD & Auto-Save
+    this.updateHUD();
+    this.save();
+    
+    if (window.KeepRenderer) window.KeepRenderer.render();
+    if (window.RealmRenderer) window.RealmRenderer.render();
+  },
+
+  /* --- 1. AGRARIAN & SOIL ROTATION LOGIC --- */
+  resolveAgriculture(seasonName) {
+    const C = window.CrownState;
+    let totalHarvestedGrain = 0;
+    let totalHarvestedPeas = 0;
+
+    for (let key in window.KEEP_GRID) {
+      const tile = window.KEEP_GRID[key];
+      if (tile.z !== 0) continue; // Farming occurs on level 0
+
+      // Fallow / Pasture recovery
+      if (tile.tileId === "pasture" || (!tile.crop && tile.tileId === "loam")) {
+        tile.soilFertility = Math.min(1.0, tile.soilFertility + 0.025);
+        tile.soilNitrogen = Math.min(1.0, tile.soilNitrogen + 0.02);
+        continue;
+      }
+
+      // Crop Growth
+      if (tile.crop && window.CROP_CATALOG[tile.crop]) {
+        const cropInfo = window.CROP_CATALOG[tile.crop];
+        
+        // Winter dormancy vs active growth
+        if (seasonName !== "Winter") {
+          tile.growthStage = Math.min(4, tile.growthStage + 1);
+        }
+
+        // Harvesting: if ripe (stage 4) in the correct harvest season
+        const isHarvestTime = (cropInfo.harvestSeason === C.meta.seasonIdx);
+        if (tile.growthStage >= 4 && isHarvestTime) {
+          // Calculate harvest yield modified by soil quality
+          const soilMod = tile.soilFertility * (0.6 + 0.4 * tile.soilNitrogen);
+          const yieldBushels = Math.round(cropInfo.baseYieldBushels * soilMod);
+
+          if (tile.crop === "wheat" || tile.crop === "rye" || tile.crop === "barley") {
+            totalHarvestedGrain += yieldBushels;
+          } else if (tile.crop === "peas") {
+            totalHarvestedPeas += yieldBushels;
+            C.treasury.gold += Math.round(yieldBushels * 0.2); // Surplus peas sold at local market
+          }
+
+          // Apply soil drainage & nitrogen changes
+          tile.soilNitrogen = Math.max(0.1, Math.min(1.0, tile.soilNitrogen - cropInfo.nitrogenDrain));
+          tile.soilFertility = Math.max(0.15, Math.min(1.0, tile.soilFertility - cropInfo.fertilityDrain));
+
+          // Reset tile to tilled field
+          tile.crop = null;
+          tile.growthStage = 0;
+          tile.tileId = "tilled_field";
+        }
+      }
+    }
+
+    if (totalHarvestedGrain > 0) {
+      C.treasury.grain += totalHarvestedGrain;
+      App.log(`Autumn harvest gathered: +${totalHarvestedGrain} bushels of grain brought to keep silos.`, "harvest");
+      App.Audio.harvestRustle();
+    }
+    if (totalHarvestedPeas > 0) {
+      App.log(`Legume harvest concluded: +${totalHarvestedPeas} bushels. Soil nitrogen replenished across worked strips.`, "harvest");
+    }
+  },
+
+  /* --- 2. LABOR ALLOCATION & PRODUCTION --- */
+  resolveLabor() {
+    const C = window.CrownState;
+    let timberMined = 0;
+    let stoneQuarried = 0;
+    let clothWoven = 0;
+    let aleBrewed = 0;
+
+    window.SerfRoster.forEach(serf => {
+      // Health and nourishment scale work output
+      const efficiency = (serf.health >= 70 && serf.nourishment >= 60) ? 1.0 : 0.6;
+      
+      switch (serf.task) {
+        case "timber":
+          timberMined += Math.round(3 * efficiency);
+          break;
+        case "quarry":
+          stoneQuarried += Math.round(2 * efficiency);
+          break;
+        case "craft":
+          clothWoven += 1;
+          break;
+        case "brew":
+          if (C.treasury.grain >= 2) {
+            C.treasury.grain -= 2;
+            aleBrewed += 1;
+          }
+          break;
+        case "forge":
+          C.treasury.gold += 1; // Minor tool repair income
+          break;
+        case "herd":
+          if (Math.random() < 0.3) C.treasury.wool += 1;
+          break;
+      }
+    });
+
+    C.treasury.timber += timberMined;
+    C.treasury.dressedStone += stoneQuarried;
+    C.treasury.wool += clothWoven;
+    C.treasury.ale += aleBrewed;
+
+    // Passive overland province extraction
+    for (let pKey in window.REALM_PROVINCES) {
+      const prov = window.REALM_PROVINCES[pKey];
+      if (prov.status === "annexed") {
+        C.treasury.timber += prov.yields.timber;
+        C.treasury.dressedStone += prov.yields.stone;
+        C.treasury.grain += prov.yields.grain;
+        C.treasury.gold += prov.yields.gold;
+      }
+    }
+  },
+
+  /* --- 3. FOOD CONSUMPTION & GRANARY DECAY --- */
+  resolveGranary() {
+    const C = window.CrownState;
+    const totalSerfs = window.SerfRoster.length;
+    const grainConsumed = totalSerfs; // 1 bushel per serf household per week
+
+    if (C.treasury.grain >= grainConsumed) {
+      C.treasury.grain -= grainConsumed;
+      window.SerfRoster.forEach(s => {
+        s.nourishment = Math.min(100, s.nourishment + 2);
+        s.health = Math.min(100, s.health + 1);
+      });
+    } else {
+      // Famine / Shortage
+      const missing = grainConsumed - C.treasury.grain;
+      C.treasury.grain = 0;
+      C.crown.contentment = Math.max(10, C.crown.contentment - 8);
+      
+      window.SerfRoster.forEach(s => {
+        s.nourishment = Math.max(10, s.nourishment - 8);
+        s.health = Math.max(20, s.health - 5);
+        s.contentment = Math.max(10, s.contentment - 10);
+      });
+      App.log(`Granary deficit! ${missing} bushels short. Households suffer rationing.`, "notice");
+    }
+
+    // Spoilage calculation: check for Z=-1 stone vault
+    let hasStoneVault = false;
+    for (let k in window.KEEP_GRID) {
+      if (window.KEEP_GRID[k].z === -1 && window.KEEP_GRID[k].tileId === "stone_granary_base") {
+        hasStoneVault = true;
+        break;
+      }
+    }
+
+    const baseSpoil = hasStoneVault ? 0.008 : 0.025;
+    const currentSeason = this.SEASONS[C.meta.seasonIdx];
+    // Winter dampness increases decay in wooden storage
+    const seasonalMod = (currentSeason === "Winter" && !hasStoneVault) ? 1.8 : 1.0;
+    const spoiledBushels = Math.floor(C.treasury.grain * baseSpoil * seasonalMod);
+
+    if (spoiledBushels > 0) {
+      C.treasury.grain = Math.max(0, C.treasury.grain - spoiledBushels);
+      if (spoiledBushels >= 5) {
+        App.log(`Granary dampness & vermin spoil ${spoiledBushels} bushels.`, "notice");
+      }
+    }
+  },
+
+  /* --- 4. TAXATION & FEUDAL CORVÉE --- */
+  resolveTaxation() {
+    const C = window.CrownState;
+    
+    // Seasonal Hearth Coin Tax (collected in week 4 of each season)
+    if (C.meta.weekTick === 4) {
+      const households = Math.ceil(window.SerfRoster.length / 2);
+      const taxCollected = households * C.taxation.hearthTaxGold;
+      C.treasury.gold += taxCollected;
+      App.log(`Seasonal hearth tax collected: +${taxCollected} gold into royal treasury.`, "royal");
+      App.Audio.goldCoins();
+    }
+
+    // Corvée Labor Friction
+    // Safe threshold: <= 3 days. Demanding 4, 5, or 6 days causes peasant fatigue.
+    if (C.taxation.corveeDaysOwed > 3) {
+      const excessDays = C.taxation.corveeDaysOwed - 3;
+      const moraleLoss = excessDays * 3;
+      C.crown.contentment = Math.max(15, C.crown.contentment - moraleLoss);
+      
+      window.SerfRoster.forEach(s => {
+        s.contentment = Math.max(10, s.contentment - moraleLoss);
+      });
+
+      if (C.meta.weekTick === 1) {
+        App.log(`Peasants petition the crown against heavy corvée labor (${C.taxation.corveeDaysOwed} days/wk).`, "notice");
+      }
+    } else {
+      // Balanced corvée gently recovers contentment
+      C.crown.contentment = Math.min(100, C.crown.contentment + 1);
+    }
+  },
+
+  /* --- 5. SOVEREIGN RENOWN & MIGRATION --- */
+  resolveRenownAndPrestige() {
+    const C = window.CrownState;
+
+    // Renown factors: castle masonry, land annexed, gold surplus, contentment
+    let masonryScore = 0;
+    for (let k in window.KEEP_GRID) {
+      const t = window.KEEP_GRID[k];
+      if (t.tileId === "curtain_wall") masonryScore += 2;
+      if (t.tileId === "royal_keep") masonryScore += 25;
+      if (t.tileId === "solar_chamber") masonryScore += 15;
+      if (t.tileId === "high_spire") masonryScore += 30;
+      if (t.tileId === "astronomy_turret") masonryScore += 40;
+    }
+
+    let holdingsScore = 0;
+    for (let p in window.REALM_PROVINCES) {
+      if (window.REALM_PROVINCES[p].status === "annexed") holdingsScore += 20;
+    }
+
+    const calculatedRenown = Math.floor(
+      masonryScore + 
+      holdingsScore + 
+      (C.treasury.gold * 0.1) + 
+      (C.crown.contentment * 0.5)
+    );
+    C.crown.renownPoints = calculatedRenown;
+
+    // Check Prestige Tier
+    for (let i = this.PRESTIGE_TIERS.length - 1; i >= 0; i--) {
+      if (calculatedRenown >= this.PRESTIGE_TIERS[i].min) {
+        if (C.crown.prestigeTier !== this.PRESTIGE_TIERS[i].title) {
+          C.crown.prestigeTier = this.PRESTIGE_TIERS[i].title;
+          App.log(`Renown increases! The Crown ascends to the title of ${C.crown.prestigeTier}.`, "royal");
+          App.Audio.royalFanfare();
+        }
+        break;
+      }
+    }
+
+    // Peaceful Migration
+    // Count available housing (hovels on level 0)
+    let hovels = 0;
+    for (let k in window.KEEP_GRID) {
+      if (window.KEEP_GRID[k].z === 0 && window.KEEP_GRID[k].tileId === "hovel") hovels++;
+    }
+    const maxSerfCapacity = 14 + (hovels * 2);
+
+    // High contentment + food attracts new serf households
+    if (C.crown.contentment >= 80 && C.treasury.grain > (window.SerfRoster.length * 12) && window.SerfRoster.length < maxSerfCapacity) {
+      if (Math.random() < 0.35) {
+        const newId = "s_" + Date.now();
+        const names = ["Cuthbert", "Leofric", "Hereward", "Godiva", "Wulfgifu", "Athelstan"];
+        const chosenName = names[Math.floor(Math.random() * names.length)] + " the Settler";
+        
+        window.SerfRoster.push({
+          id: newId,
+          name: chosenName,
+          caste: "cottar",
+          task: "quarry",
+          health: 90,
+          nourishment: 85,
+          contentment: 85,
+          draftOx: false,
+          x: 4, y: 4, z: 0
+        });
+        App.log(`Fame spreads of your prosperous keep. A new household (${chosenName}) swears fealty!`, "royal");
+      }
+    }
+
+    // Low contentment causes peaceful migration away to neighboring baronies
+    if (C.crown.contentment < 35 && window.SerfRoster.length > 6) {
+      if (Math.random() < 0.25) {
+        const departed = window.SerfRoster.pop();
+        App.log(`${departed.name} quietly relocates to a neighboring valley due to low morale.`, "notice");
+      }
+    }
+  },
+
+  /* --- 6. HUD SYNCHRONIZATION --- */
+  updateHUD() {
+    const C = window.CrownState;
+    const seasonName = this.SEASONS[C.meta.seasonIdx];
+
+    const seasonYearEl = document.getElementById("hud-season-year");
+    if (seasonYearEl) {
+      seasonYearEl.innerText = `${seasonName} (Wk ${C.meta.weekTick}), Yr ${C.meta.year}`;
+    }
+
+    const renownEl = document.getElementById("hud-renown");
+    if (renownEl) {
+      renownEl.innerText = `${C.crown.prestigeTier} (${C.crown.renownPoints})`;
+    }
+
+    const goldEl = document.getElementById("hud-gold");
+    if (goldEl) goldEl.innerText = `${C.treasury.gold}g`;
+
+    const grainEl = document.getElementById("hud-grain");
+    if (grainEl) grainEl.innerText = `${C.treasury.grain}b`;
+
+    const stoneEl = document.getElementById("hud-stone");
+    if (stoneEl) stoneEl.innerText = `${C.treasury.dressedStone}`;
+
+    const timberEl = document.getElementById("hud-timber");
+    if (timberEl) timberEl.innerText = `${C.treasury.timber}`;
+
+    const serfsEl = document.getElementById("hud-serfs");
+    if (serfsEl) serfsEl.innerText = `${window.SerfRoster.length}`;
+  },
+
+  /* --- 7. PERSISTENCE (SAVE / LOAD / RESET) --- */
+  save() {
+    try {
+      const data = {
+        crownState: window.CrownState,
+        serfRoster: window.SerfRoster,
+        keepGrid: window.KEEP_GRID,
+        realmProvinces: window.REALM_PROVINCES
+      };
+      localStorage.setItem("throne_and_plow_save", JSON.stringify(data));
+    } catch (e) {
+      console.warn("Save failed:", e);
+    }
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem("throne_and_plow_save");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.crownState) window.CrownState = parsed.crownState;
+        if (parsed.serfRoster) window.SerfRoster = parsed.serfRoster;
+        if (parsed.keepGrid) window.KEEP_GRID = parsed.keepGrid;
+        if (parsed.realmProvinces) window.REALM_PROVINCES = parsed.realmProvinces;
+        App.log("Restored previous reign from local storage.", "notice");
+      }
+    } catch (e) {
+      console.warn("Load failed, using clean catalogs:", e);
+    }
+  },
+
+  reset() {
+    localStorage.removeItem("throne_and_plow_save");
+    location.reload();
+  }
+};
+
+// Initialize the simulation engine automatically
+window.addEventListener("DOMContentLoaded", () => {
+  window.SimulationEngine.init();
+});
+/* ==========================================================================
+   CHUNK 3: DUAL-GRID MAP ENGINES & MODULAR CASTLE BUILDER
+   ========================================================================== */
+
+// --- 1. LOCAL KEEP TACTICAL CANVAS RENDERER (16×16 GRID) ---
+window.KeepRenderer = {
+  canvas: null,
+  ctx: null,
+  gridCols: 16,
+  gridRows: 16,
+  tileSize: 22.5, // 360px / 16
+
+  init() {
+    this.canvas = document.getElementById("keepCanvas");
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext("2d");
+    this.attachEvents();
+    this.render();
+  },
+
+  render() {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const currentZ = App.currentZ;
+    ctx.clearRect(0, 0, 360, 360);
+
+    // 1. Lower-Level Onion Skinning (Ghosting)
+    if (currentZ > -2) {
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      this.drawLayer(currentZ - 1, false);
+      ctx.restore();
+    }
+
+    // 2. Render Active Z-Level
+    this.drawLayer(currentZ, true);
+
+    // 3. D&D Battlemat Tactical Grid & Corner Crosshairs
+    this.drawTacticalGrid();
+
+    // 4. Serf Tokens on Active Layer
+    this.drawSerfTokens(currentZ);
+
+    // 5. Selection Highlight Cursor
+    if (CrownState.selectedKeepTile && CrownState.selectedKeepTile.z === currentZ) {
+      this.drawSelectionCursor(CrownState.selectedKeepTile.x, CrownState.selectedKeepTile.y);
+    }
+  },
+
+  drawLayer(z, isActiveLayer) {
+    const ctx = this.ctx;
+    const ts = this.tileSize;
+
+    for (let y = 0; y < this.gridRows; y++) {
+      for (let x = 0; x < this.gridCols; x++) {
+        const tile = window.KEEP_GRID[`${x}_${y}_${z}`];
+        if (!tile) continue;
+        const px = x * ts;
+        const py = y * ts;
+
+        // Base terrain shading
+        ctx.fillStyle = this.getTerrainFill(tile.tileId, z);
+        ctx.fillRect(px, py, ts, ts);
+
+        // Subterranean excavation marks
+        if (z < 0 && tile.tileId.includes("vault")) {
+          ctx.strokeStyle = "rgba(148, 163, 184, 0.15)";
+          ctx.strokeRect(px + 2, py + 2, ts - 4, ts - 4);
+        }
+
+        // Agricultural render pass (Z: 0 only)
+        if (z === 0 && tile.crop) {
+          this.drawCropDetail(tile, px, py, ts);
+        }
+
+        // Structural detailing pass
+        if (tile.tileId && tile.tileId !== "loam" && tile.tileId !== "tilled_field" && tile.tileId !== "open_air_1" && tile.tileId !== "open_air_2") {
+          this.drawStructureDetail(tile.tileId, px, py, ts, z, isActiveLayer);
+        }
+      }
+    }
+  },
+
+  getTerrainFill(tileId, z) {
+    if (z === 1 || z === 2) {
+      return (tileId.startsWith("open_air")) ? "#050608" : "#121722";
+    }
+    if (z === -1 || z === -2) {
+      return (tileId === "cellar_dirt") ? "#0c0e14" : "#181d28";
+    }
+    // Level 0 Ground
+    switch (tileId) {
+      case "loam": return "#141821";
+      case "tilled_field": return "#231e17";
+      case "pasture": return "#0d261e";
+      default: return "#10141d";
+    }
+  },
+
+  drawCropDetail(tile, px, py, ts) {
+    const ctx = this.ctx;
+    const stage = tile.growthStage || 1; // 1 to 4
+
+    if (tile.crop === "wheat" || tile.crop === "rye") {
+      // Golden stalks scale by stage
+      const stalkColor = (stage === 4) ? "#f59e0b" : ((stage >= 2) ? "#ca8a04" : "#10b981");
+      ctx.fillStyle = stalkColor;
+      const count = stage * 3;
+      for (let i = 0; i < count; i++) {
+        const sx = px + 3 + ((i * 5) % (ts - 6));
+        const sy = py + 3 + ((i * 7) % (ts - 6));
+        ctx.fillRect(sx, sy, 1.5, 3 + stage);
+      }
+    } else if (tile.crop === "barley") {
+      ctx.fillStyle = (stage === 4) ? "#fbbf24" : "#10b981";
+      for (let i = 0; i < stage * 2; i++) {
+        ctx.fillRect(px + 4 + (i * 4), py + 5, 2, 6);
+      }
+    } else if (tile.crop === "peas") {
+      // Emerald legume leaves and pods
+      ctx.fillStyle = "#34d399";
+      ctx.beginPath();
+      ctx.arc(px + ts / 2, py + ts / 2, Math.min(ts / 2 - 2, 2 + stage * 1.8), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  },
+
+  drawStructureDetail(tileId, px, py, ts, z, isActive) {
+    const ctx = this.ctx;
+
+    if (tileId === "curtain_wall") {
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(px + 1, py + 1, ts - 2, ts - 2);
+      // Stone masonry joints
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.beginPath();
+      ctx.moveTo(px + 1, py + ts / 2); ctx.lineTo(px + ts - 1, py + ts / 2);
+      ctx.moveTo(px + ts / 2, py + 1); ctx.lineTo(px + ts / 2, py + ts / 2);
+      ctx.stroke();
+    } else if (tileId === "royal_keep") {
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(px + 2, py + 2, ts - 4, ts - 4);
+      // Center Keep Inscription
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("K", px + ts / 2, py + ts / 2);
+    } else if (tileId === "rampart_walk") {
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(px + 2, py + 2, ts - 4, ts - 4);
+      // Crenels
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(px + 3, py + 2, 4, 2);
+      ctx.fillRect(px + ts - 7, py + 2, 4, 2);
+    } else if (tileId === "solar_chamber") {
+      ctx.fillStyle = "#164e63";
+      ctx.fillRect(px + 2, py + 2, ts - 4, ts - 4);
+      ctx.strokeStyle = "#7dd3fc";
+      ctx.strokeRect(px + 2, py + 2, ts - 4, ts - 4);
+      ctx.fillStyle = "#7dd3fc";
+      ctx.font = "bold 8px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("C", px + ts / 2, py + ts / 2);
+    } else if (tileId === "guard_turret" || tileId === "high_spire") {
+      ctx.fillStyle = (tileId === "high_spire") ? "#0284c7" : "#334155";
+      ctx.beginPath();
+      ctx.arc(px + ts / 2, py + ts / 2, ts / 2 - 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = (tileId === "high_spire") ? "#38bdf8" : "#94a3b8";
+      ctx.stroke();
+    } else if (tileId === "stone_granary_base") {
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(px + 2, py + 2, ts - 4, ts - 4);
+      ctx.strokeStyle = "#38bdf8";
+      ctx.strokeRect(px + 3, py + 3, ts - 6, ts - 6);
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "8px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("G", px + ts / 2, py + ts / 2);
+    } else if (tileId === "hovel") {
+      ctx.fillStyle = "#292524";
+      ctx.fillRect(px + 3, py + 3, ts - 6, ts - 6);
+      ctx.strokeStyle = "#78716c";
+      ctx.strokeRect(px + 3, py + 3, ts - 6, ts - 6);
+    }
+  },
+
+  drawTacticalGrid() {
+    const ctx = this.ctx;
+    const ts = this.tileSize;
+    ctx.save();
+    ctx.lineWidth = 0.5;
+
+    // Grid lines
+    for (let i = 0; i <= this.gridCols; i++) {
+      const pos = Math.round(i * ts);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
+      ctx.beginPath();
+      ctx.moveTo(pos, 0); ctx.lineTo(pos, 360);
+      ctx.moveTo(0, pos); ctx.lineTo(360, pos);
+      ctx.stroke();
+    }
+
+    // Corner crosshair ticks for D&D battlemat look
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+    const tick = 2;
+    for (let x = 0; x <= this.gridCols; x++) {
+      for (let y = 0; y <= this.gridRows; y++) {
+        const px = Math.round(x * ts);
+        const py = Math.round(y * ts);
+        ctx.beginPath();
+        ctx.moveTo(px - tick, py); ctx.lineTo(px + tick, py);
+        ctx.moveTo(px, py - tick); ctx.lineTo(px, py + tick);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  },
+
+  drawSerfTokens(currentZ) {
+    const ctx = this.ctx;
+    const ts = this.tileSize;
+
+    window.SerfRoster.forEach(serf => {
+      if (serf.z !== currentZ) return;
+      const cx = serf.x * ts + ts / 2;
+      const cy = serf.y * ts + ts / 2;
+      const radius = ts * 0.35;
+
+      // Token shadow
+      ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+      ctx.beginPath();
+      ctx.arc(cx + 1, cy + 1, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Disc Fill & Border
+      ctx.fillStyle = (serf.caste === "villein") ? "#172554" : ((serf.caste === "artisan") ? "#064e3b" : "#1e293b");
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = (serf.caste === "villein") ? "#38bdf8" : ((serf.caste === "artisan") ? "#34d399" : "#94a3b8");
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Initial glyph
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 8px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(serf.name[0], cx, cy);
+    });
+  },
+
+  drawSelectionCursor(x, y) {
+    const ctx = this.ctx;
+    const ts = this.tileSize;
+    const px = x * ts;
+    const py = y * ts;
+
+    ctx.save();
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px + 1, py + 1, ts - 2, ts - 2);
+
+    // Corner brackets
+    const bLen = 5;
+    ctx.strokeStyle = "#7dd3fc";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(px, py + bLen); ctx.lineTo(px, py); ctx.lineTo(px + bLen, py);
+    ctx.moveTo(px + ts - bLen, py); ctx.lineTo(px + ts, py); ctx.lineTo(px + ts, py + bLen);
+    ctx.moveTo(px, py + ts - bLen); ctx.lineTo(px, py + ts); ctx.lineTo(px + bLen, py + ts);
+    ctx.moveTo(px + ts - bLen, py + ts); ctx.lineTo(px + ts, py + ts); ctx.lineTo(px + ts, py + ts - bLen);
+    ctx.stroke();
+    ctx.restore();
+  },
+
+  attachEvents() {
+    const handlePick = (e) => {
+      e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+
+      const x = Math.floor((clientX - rect.left) * scaleX / this.tileSize);
+      const y = Math.floor((clientY - rect.top) * scaleY / this.tileSize);
+
+      if (x >= 0 && x < this.gridCols && y >= 0 && y < this.gridRows) {
+        this.selectTile(x, y, App.currentZ);
+      }
+    };
+
+    this.canvas.addEventListener("click", handlePick);
+    this.canvas.addEventListener("touchstart", handlePick, { passive: false });
+  },
+
+  selectTile(x, y, z) {
+    App.Audio.click();
+    const key = `${x}_${y}_${z}`;
+    CrownState.selectedKeepTile = window.KEEP_GRID[key];
+    this.render();
+    CastleBuilder.updateInspectorUI(CrownState.selectedKeepTile);
+  }
+};
+
+// --- 2. ARCHITECTURAL MODULAR CASTLE BUILDER ENGINE ---
+window.CastleBuilder = {
+  updateInspectorUI(tile) {
+    const container = document.getElementById("keep-tile-inspector");
+    if (!container || !tile) return;
+
+    const catalogEntry = window.TILE_CATALOG[tile.tileId] || { name: tile.tileId, bonus: "None" };
+    const serf = window.SerfRoster.find(s => s.x === tile.x && s.y === tile.y && s.z === tile.z);
+
+    let html = `
+      <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 6px; margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: var(--cyan);">[${tile.x}, ${tile.y}] ${catalogEntry.name}</strong>
+          <span class="badge badge-silver">Level ${tile.z}</span>
+        </div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+          Soil Fertility: ${Math.round((tile.soilFertility || 0) * 100)}% | Nitrogen: ${Math.round((tile.soilNitrogen || 0) * 100)}%
+        </div>
+        ${serf ? `<div style="color: var(--mint); font-size: 11px; margin-top: 2px;">• Stationed: <strong>${serf.name}</strong> (${serf.caste}, doing ${serf.task})</div>` : ''}
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+    `;
+
+    // Dynamic actions based on elevation and tile state
+    if (tile.z === 0) {
+      // Ground Bailey actions
+      if (tile.tileId === "loam" || tile.tileId === "tilled_field") {
+        html += `
+          <div class="btn-group">
+            <button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructure('curtain_wall')">Raise Wall (15S)</button>
+            <button class="btn btn-sm" onclick="CastleBuilder.buildStructure('hovel')">Build Hovel (15T/5G)</button>
+          </div>
+          <div class="btn-group-3" style="margin-top: 4px;">
+            <button class="btn btn-sm" onclick="CastleBuilder.plantCrop('wheat')">Sow Wheat</button>
+            <button class="btn btn-sm" onclick="CastleBuilder.plantCrop('peas')">Sow Peas</button>
+            <button class="btn btn-sm" onclick="CastleBuilder.plantCrop('barley')">Sow Barley</button>
+          </div>
+        `;
+      } else {
+        html += `<button class="btn btn-sm" onclick="CastleBuilder.demolishSelected()">Demolish Structure (Reclaim 50%)</button>`;
+      }
+    } else if (tile.z === 1) {
+      // Wallwalk & Solar Level
+      const below = window.KEEP_GRID[`${tile.x}_${tile.y}_0`];
+      if (tile.tileId.startsWith("open_air")) {
+        if (below && below.tileId === "curtain_wall") {
+          html += `
+            <div class="btn-group">
+              <button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructure('rampart_walk')">Build Ramparts (10S/10T)</button>
+              <button class="btn btn-sm" onclick="CastleBuilder.buildStructure('guard_turret')">Raise Turret (20S)</button>
+            </div>
+          `;
+        } else if (below && below.tileId === "royal_keep") {
+          html += `<button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructure('solar_chamber')">Lord's Solar (30S/40T/50G)</button>`;
+        } else {
+          html += `<div style="font-size: 11px; color: var(--text-muted);">Requires Curtain Wall or Keep directly beneath on Level 0.</div>`;
+        }
+      } else {
+        html += `<button class="btn btn-sm" onclick="CastleBuilder.demolishSelected()">Demolish (Reclaim 50%)</button>`;
+      }
+    } else if (tile.z === 2) {
+      // High Spire Level
+      const below1 = window.KEEP_GRID[`${tile.x}_${tile.y}_1`];
+      if (tile.tileId.startsWith("open_air")) {
+        if (below1 && below1.tileId === "guard_turret") {
+          html += `<button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructure('high_spire')">Raise High Spire (50S/80G)</button>`;
+        } else if (below1 && below1.tileId === "solar_chamber") {
+          html += `
+            <div class="btn-group">
+              <button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructure('astronomy_turret')">Star Chamber (40S/120G)</button>
+              <button class="btn btn-sm" onclick="CastleBuilder.buildStructure('rookery')">Rookery (35T/45G)</button>
+            </div>
+          `;
+        } else {
+          html += `<div style="font-size: 11px; color: var(--text-muted);">Requires Turret or Solar chamber below on Level +1.</div>`;
+        }
+      } else {
+        html += `<button class="btn btn-sm" onclick="CastleBuilder.demolishSelected()">Demolish High Spire</button>`;
+      }
+    } else if (tile.z === -1 || tile.z === -2) {
+      // Subterranean Excavation
+      if (tile.tileId === "cellar_dirt") {
+        html += `
+          <div class="btn-group">
+            <button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructure('stone_granary_base')">Granary Vault (40S/25T)</button>
+            <button class="btn btn-sm" onclick="CastleBuilder.buildStructure('larder_pit')">Cold Larder (25S/15T)</button>
+          </div>
+        `;
+      } else {
+        html += `<button class="btn btn-sm" onclick="CastleBuilder.demolishSelected()">Clear Sub-vault</button>`;
+      }
+    }
+
+    html += `</div>`;
+    container.innerHTML = html;
+  },
+
+  buildStructure(catalogId) {
+    const tile = CrownState.selectedKeepTile;
+    if (!tile) return;
+    const entry = window.TILE_CATALOG[catalogId];
+    if (!entry) return;
+
+    // Check Multi-level structural requirements
+    if (entry.requiresBelow) {
+      const belowTile = window.KEEP_GRID[`${tile.x}_${tile.y}_${tile.z - 1}`];
+      if (!belowTile || belowTile.tileId !== entry.requiresBelow) {
+        App.log(`Structural failure: ${entry.name} requires ${entry.requiresBelow} directly beneath!`, "notice");
+        App.Audio.stoneThud();
+        return;
+      }
+    }
+
+    // Check Treasury Costs
+    const cost = entry.cost || {};
+    const sCost = cost.stone || 0;
+    const tCost = cost.timber || 0;
+    const gCost = cost.gold || 0;
+    const iCost = cost.iron || 0;
+
+    if (CrownState.treasury.dressedStone < sCost || 
+        CrownState.treasury.timber < tCost || 
+        CrownState.treasury.gold < gCost || 
+        CrownState.treasury.ironBloom < iCost) {
+      App.log(`Insufficient resources for ${entry.name}. Needed: ${sCost}S, ${tCost}T, ${gCost}G`, "notice");
+      return;
+    }
+
+    // Deduct
+    CrownState.treasury.dressedStone -= sCost;
+    CrownState.treasury.timber -= tCost;
+    CrownState.treasury.gold -= gCost;
+    CrownState.treasury.ironBloom -= iCost;
+
+    tile.tileId = catalogId;
+    tile.crop = null;
+    tile.growthStage = 0;
+
+    App.Audio.hammerClink();
+    App.log(`Masons complete construction of ${entry.name} at [${tile.x}, ${tile.y}, Z:${tile.z}].`, "royal");
+
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    KeepRenderer.render();
+    this.updateInspectorUI(tile);
+  },
+
+  plantCrop(cropId) {
+    const tile = CrownState.selectedKeepTile;
+    if (!tile || tile.z !== 0) return;
+    tile.tileId = "tilled_field";
+    tile.crop = cropId;
+    tile.growthStage = 1;
+
+    App.Audio.harvestRustle();
+    App.log(`Demesne strip at [${tile.x}, ${tile.y}] sown with ${window.CROP_CATALOG[cropId].name}.`, "harvest");
+
+    SimulationEngine.save();
+    KeepRenderer.render();
+    this.updateInspectorUI(tile);
+  },
+
+  demolishSelected() {
+    const tile = CrownState.selectedKeepTile;
+    if (!tile) return;
+
+    // Check if anything above relies on this tile
+    if (tile.z < 2) {
+      const above = window.KEEP_GRID[`${tile.x}_${tile.y}_${tile.z + 1}`];
+      if (above && above.tileId && !above.tileId.startsWith("open_air")) {
+        App.log("Cannot demolish: upper chambers rely upon this structural foundation!", "notice");
+        App.Audio.stoneThud();
+        return;
+      }
+    }
+
+    const prevEntry = window.TILE_CATALOG[tile.tileId];
+    if (prevEntry && prevEntry.cost) {
+      // Reclaim 50%
+      if (prevEntry.cost.stone) CrownState.treasury.dressedStone += Math.floor(prevEntry.cost.stone * 0.5);
+      if (prevEntry.cost.timber) CrownState.treasury.timber += Math.floor(prevEntry.cost.timber * 0.5);
+    }
+
+    tile.tileId = (tile.z === 0) ? "loam" : ((tile.z < 0) ? "cellar_dirt" : "open_air_" + tile.z);
+    tile.crop = null;
+    tile.growthStage = 0;
+
+    App.Audio.stoneThud();
+    App.log(`Demolished structure at [${tile.x}, ${tile.y}, Z:${tile.z}]. Salvaged stone & timber reclaimed.`, "notice");
+
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    KeepRenderer.render();
+    this.updateInspectorUI(tile);
+  }
+};
+
+// --- 3. OVERLAND REALM CANVAS RENDERER (8×8 GRID) ---
+window.RealmRenderer = {
+  canvas: null,
+  ctx: null,
+  gridDim: 8,
+  tileSize: 45, // 360px / 8
+
+  init() {
+    this.canvas = document.getElementById("realmCanvas");
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext("2d");
+    this.attachEvents();
+    this.render();
+  },
+
+  render() {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const ts = this.tileSize;
+    ctx.clearRect(0, 0, 360, 360);
+
+    let annexedCount = 0;
+
+    for (let ry = 0; ry < this.gridDim; ry++) {
+      for (let rx = 0; rx < this.gridDim; rx++) {
+        const prov = window.REALM_PROVINCES[`${rx}_${ry}`];
+        if (!prov) continue;
+        const px = rx * ts;
+        const py = ry * ts;
+
+        if (prov.status === "annexed") annexedCount++;
+
+        // Draw Province Terrain Tile
+        if (prov.status === "uncharted") {
+          ctx.fillStyle = "#0a0d14";
+          ctx.fillRect(px, py, ts, ts);
+          // Fog of war cross hatch
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+          ctx.beginPath();
+          ctx.moveTo(px, py); ctx.lineTo(px + ts, py + ts);
+          ctx.stroke();
+          // Unknown glyph
+          ctx.fillStyle = "rgba(148, 163, 184, 0.25)";
+          ctx.font = "12px monospace";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("?", px + ts / 2, py + ts / 2);
+        } else {
+          // Surveyed or Annexed
+          ctx.fillStyle = prov.color + (prov.status === "annexed" ? "22" : "11");
+          ctx.fillRect(px, py, ts, ts);
+
+          ctx.strokeStyle = (prov.status === "annexed") ? "#38bdf8" : "rgba(148, 163, 184, 0.2)";
+          ctx.lineWidth = (prov.status === "annexed") ? 1.5 : 0.8;
+          ctx.strokeRect(px + 1, py + 1, ts - 2, ts - 2);
+
+          // Province Icon
+          ctx.fillStyle = (prov.status === "annexed") ? "#38bdf8" : "#94a3b8";
+          ctx.font = "14px monospace";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(prov.icon, px + ts / 2, py + ts / 2 - 4);
+
+          // Name snippet
+          ctx.fillStyle = (prov.status === "annexed") ? "#ffffff" : "#64748b";
+          ctx.font = "7px sans-serif";
+          ctx.fillText(prov.name.split(" ")[0], px + ts / 2, py + ts / 2 + 12);
+        }
+      }
+    }
+
+    // Update Holdings Count
+    const holdingsEl = document.getElementById("realm-holdings-count");
+    if (holdingsEl) holdingsEl.innerText = `Holdings: ${annexedCount}/64`;
+
+    // Draw Selected Cursor
+    if (CrownState.selectedRealmProvince) {
+      const sp = CrownState.selectedRealmProvince;
+      const px = sp.x * ts;
+      const py = sp.y * ts;
+      ctx.strokeStyle = "#34d399";
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(px + 2, py + 2, ts - 4, ts - 4);
+    }
+  },
+
+  attachEvents() {
+    const handlePick = (e) => {
+      e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+
+      const rx = Math.floor((clientX - rect.left) * scaleX / this.tileSize);
+      const ry = Math.floor((clientY - rect.top) * scaleY / this.tileSize);
+
+      if (rx >= 0 && rx < this.gridDim && ry >= 0 && ry < this.gridDim) {
+        this.selectProvince(rx, ry);
+      }
+    };
+
+    this.canvas.addEventListener("click", handlePick);
+    this.canvas.addEventListener("touchstart", handlePick, { passive: false });
+  },
+
+  selectProvince(rx, ry) {
+    App.Audio.click();
+    const prov = window.REALM_PROVINCES[`${rx}_${ry}`];
+    CrownState.selectedRealmProvince = prov;
+    this.render();
+    this.updateInspectorUI(prov);
+  },
+
+  updateInspectorUI(prov) {
+    const container = document.getElementById("realm-inspector");
+    if (!container || !prov) return;
+
+    let html = `
+      <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 6px; margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: var(--cyan);">${prov.name}</strong>
+          <span class="badge ${prov.status === 'annexed' ? 'badge-mint' : 'badge-silver'}">${prov.status.toUpperCase()}</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">
+          Biome: <strong>${prov.biomeName}</strong> • Boon: <span style="color: var(--mint);">${prov.boon}</span>
+        </div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+          Weekly Tribute: +${prov.yields.grain} Grain, +${prov.yields.timber} Timber, +${prov.yields.stone} Stone, +${prov.yields.gold} Gold
+        </div>
+      </div>
+    `;
+
+    if (prov.status === "uncharted") {
+      html += `
+        <button class="btn btn-sm btn-cyan" onclick="RealmRenderer.surveyProvince(${prov.x}, ${prov.y})">
+          Send Royal Surveyors (25g)
+        </button>
+      `;
+    } else if (prov.status === "surveyed") {
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px;">
+          <span>Crown Charter Cost:</span>
+          <strong>${prov.charterCostGold}g &amp; ${prov.charterCostRenown} Renown</strong>
+        </div>
+        <button class="btn btn-sm btn-cyan" onclick="RealmRenderer.annexProvince(${prov.x}, ${prov.y})">
+          Annex Province by Crown Charter
+        </button>
+      `;
+    } else if (prov.status === "annexed") {
+      html += `<div style="font-size: 11px; color: var(--mint);">This territory stands firmly incorporated into your sovereign crown.</div>`;
+    }
+
+    container.innerHTML = html;
+  },
+
+  surveyProvince(rx, ry) {
+    if (CrownState.treasury.gold < 25) {
+      App.log("Insufficient treasury gold to dispatch royal surveyors (25g needed).", "notice");
+      return;
+    }
+    CrownState.treasury.gold -= 25;
+    const prov = window.REALM_PROVINCES[`${rx}_${ry}`];
+    prov.status = "surveyed";
+
+    App.Audio.goldCoins();
+    App.log(`Royal cartographers survey ${prov.name}. Natural resources mapped.`, "notice");
+
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    this.render();
+    this.updateInspectorUI(prov);
+  },
+
+  annexProvince(rx, ry) {
+    const prov = window.REALM_PROVINCES[`${rx}_${ry}`];
+    if (!prov) return;
+
+    if (CrownState.treasury.gold < prov.charterCostGold || CrownState.crown.renownPoints < prov.charterCostRenown) {
+      App.log(`Charter rejected: Need ${prov.charterCostGold}g & ${prov.charterCostRenown} Sovereign Renown.`, "notice");
+      App.Audio.stoneThud();
+      return;
+    }
+
+    CrownState.treasury.gold -= prov.charterCostGold;
+    prov.status = "annexed";
+
+    // Uncover neighbors
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nKey = `${rx + dx}_${ry + dy}`;
+        const neighbor = window.REALM_PROVINCES[nKey];
+        if (neighbor && neighbor.status === "uncharted") {
+          neighbor.status = "surveyed";
+        }
+      }
+    }
+
+    App.Audio.royalFanfare();
+    App.log(`By Crown Charter, ${prov.name} is annexed into the sovereign realm!`, "royal");
+
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    this.render();
+    this.updateInspectorUI(prov);
+  }
+};
+
+// Initialize renderers when DOM loads
+window.addEventListener("DOMContentLoaded", () => {
+  KeepRenderer.init();
+  RealmRenderer.init();
+});
+/* ==========================================================================
+   CHUNK 4: CROWN VENTURES, GUILD ENTERPRISES & CARAVAN MARKET
+   ========================================================================== */
+
+// --- 1. CROWN VENTURES & ENTERPRISES CATALOG ---
+window.VentureEngine = {
+  ventures: {
+    apiary: {
+      id: "apiary",
+      name: "Royal Apiaries & Waxworks",
+      desc: "Cultivates clover honey and bees' wax for palace illumination and trade.",
+      level: 1,
+      maxLevel: 5,
+      unlocked: true,
+      workers: 1,
+      maxWorkers: 3,
+      workerCaste: "cottar",
+      inputs: {}, // Self-sustaining
+      outputs: { honey: 2, gold: 1 },
+      renownYield: 1,
+      upgradeCost: { timber: 25, gold: 30 }
+    },
+    brewery: {
+      id: "brewery",
+      name: "Crown Malthouse & Brewhouse",
+      desc: "Ferments barley and spring wheat into strong ale for the garrison and trade.",
+      level: 1,
+      maxLevel: 5,
+      unlocked: true,
+      workers: 1,
+      maxWorkers: 4,
+      workerCaste: "artisan",
+      inputs: { grain: 2 },
+      outputs: { ale: 2, gold: 2 },
+      renownYield: 2,
+      upgradeCost: { timber: 35, stone: 20, gold: 45 }
+    },
+    tapestry: {
+      id: "tapestry",
+      name: "Royal Tapestry & Weaving Looms",
+      desc: "Carding, spinning, and loom weaving of fine shearings into palace tapestries.",
+      level: 0,
+      maxLevel: 4,
+      unlocked: false,
+      workers: 0,
+      maxWorkers: 3,
+      workerCaste: "artisan",
+      inputs: { wool: 2 },
+      outputs: { gold: 6 },
+      renownYield: 5,
+      foundCost: { timber: 40, gold: 60 },
+      upgradeCost: { timber: 30, gold: 50 }
+    },
+    stonemason_guild: {
+      id: "stonemason_guild",
+      name: "Stonemasons' Guildhall",
+      desc: "Dresses rough quarry rock into ashlar blocks and trains apprentice masons.",
+      level: 0,
+      maxLevel: 4,
+      unlocked: false,
+      workers: 0,
+      maxWorkers: 4,
+      workerCaste: "cottar",
+      inputs: { timber: 1 },
+      outputs: { dressedStone: 3 },
+      renownYield: 3,
+      foundCost: { stone: 35, timber: 25, gold: 50 },
+      upgradeCost: { stone: 40, timber: 20, gold: 60 }
+    },
+    scriptorium: {
+      id: "scriptorium",
+      name: "Grand Scriptorium & Paper Mill",
+      desc: "Produces illuminated charters, treaty rolls, and Crown archives.",
+      level: 0,
+      maxLevel: 3,
+      unlocked: false,
+      workers: 0,
+      maxWorkers: 2,
+      workerCaste: "artisan",
+      inputs: { timber: 2 },
+      outputs: { gold: 3 },
+      renownYield: 8,
+      foundCost: { timber: 50, stone: 30, gold: 90 },
+      upgradeCost: { timber: 40, gold: 80 }
+    },
+    glassworks: {
+      id: "glassworks",
+      name: "Crown Glassblowing Atelier",
+      desc: "Burns river sand and potash into stained glass and luxury bottles.",
+      level: 0,
+      maxLevel: 3,
+      unlocked: false,
+      workers: 0,
+      maxWorkers: 3,
+      workerCaste: "artisan",
+      inputs: { timber: 3 },
+      outputs: { gold: 10 },
+      renownYield: 10,
+      foundCost: { stone: 60, timber: 45, gold: 120 },
+      upgradeCost: { stone: 40, gold: 90 }
+    },
+    cartwright: {
+      id: "cartwright",
+      name: "Carriage & Cartwright Works",
+      desc: "Builds heavy wains and ox-wagons, boosting trade convoy yields from provinces.",
+      level: 0,
+      maxLevel: 3,
+      unlocked: false,
+      workers: 0,
+      maxWorkers: 3,
+      workerCaste: "cottar",
+      inputs: { timber: 3, ironBloom: 1 },
+      outputs: { gold: 8 },
+      renownYield: 4,
+      foundCost: { timber: 60, ironBloom: 10, gold: 80 },
+      upgradeCost: { timber: 45, gold: 75 }
+    },
+    mint: {
+      id: "mint",
+      name: "Royal Assayer & Crown Mint",
+      desc: "Strikes official royal coinage, standardizing bullion and securing market tariffs.",
+      level: 0,
+      maxLevel: 2,
+      unlocked: false,
+      workers: 0,
+      maxWorkers: 2,
+      workerCaste: "artisan",
+      inputs: { ironBloom: 2 },
+      outputs: { gold: 15 },
+      renownYield: 15,
+      foundCost: { stone: 80, ironBloom: 25, gold: 200 },
+      upgradeCost: { stone: 60, gold: 150 }
+    }
+  },
+
+  init() {
+    this.renderUI();
+  },
+
+  // Turn-resolution for ventures
+  processVentures() {
+    const C = window.CrownState;
+    let goldProduced = 0;
+    let renownProduced = 0;
+
+    for (let key in this.ventures) {
+      const v = this.ventures[key];
+      if (!v.unlocked || v.workers === 0) continue;
+
+      // Check input resource availability
+      let canRun = true;
+      for (let res in v.inputs) {
+        const required = v.inputs[res] * v.workers;
+        if ((C.treasury[res] || 0) < required) {
+          canRun = false;
+          break;
+        }
+      }
+
+      if (canRun) {
+        // Consume inputs
+        for (let res in v.inputs) {
+          C.treasury[res] -= v.inputs[res] * v.workers;
+        }
+        // Yield outputs
+        for (let res in v.outputs) {
+          const qty = v.outputs[res] * v.workers * v.level;
+          if (res === "gold") goldProduced += qty;
+          else C.treasury[res] = (C.treasury[res] || 0) + qty;
+        }
+        renownProduced += v.renownYield * v.level;
+      }
+    }
+
+    if (goldProduced > 0) C.treasury.gold += goldProduced;
+    if (renownProduced > 0) C.crown.renownPoints += renownProduced;
+  },
+
+  foundVenture(id) {
+    const C = window.CrownState;
+    const v = this.ventures[id];
+    if (!v || v.unlocked) return;
+
+    const cost = v.foundCost || {};
+    if ((C.treasury.timber < (cost.timber || 0)) ||
+        (C.treasury.stone < (cost.stone || 0)) ||
+        (C.treasury.gold < (cost.gold || 0)) ||
+        (C.treasury.ironBloom < (cost.ironBloom || 0))) {
+      App.log(`Insufficient resources to charter ${v.name}.`, "notice");
+      return;
+    }
+
+    C.treasury.timber -= (cost.timber || 0);
+    C.treasury.stone -= (cost.stone || 0);
+    C.treasury.gold -= (cost.gold || 0);
+    C.treasury.ironBloom -= (cost.ironBloom || 0);
+
+    v.unlocked = true;
+    v.level = 1;
+    v.workers = 1;
+
+    App.Audio.royalFanfare();
+    App.log(`By royal writ, ${v.name} has been chartered and established!`, "royal");
+
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    this.renderUI();
+  },
+
+  upgradeVenture(id) {
+    const C = window.CrownState;
+    const v = this.ventures[id];
+    if (!v || !v.unlocked || v.level >= v.maxLevel) return;
+
+    const cost = v.upgradeCost || {};
+    if ((C.treasury.timber < (cost.timber || 0)) ||
+        (C.treasury.stone < (cost.stone || 0)) ||
+        (C.treasury.gold < (cost.gold || 0))) {
+      App.log(`Insufficient resources to expand ${v.name}.`, "notice");
+      return;
+    }
+
+    C.treasury.timber -= (cost.timber || 0);
+    C.treasury.stone -= (cost.stone || 0);
+    C.treasury.gold -= (cost.gold || 0);
+
+    v.level += 1;
+    App.Audio.hammerClink();
+    App.log(`Expansion complete: ${v.name} upgraded to Tier ${v.level}!`, "royal");
+
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    this.renderUI();
+  },
+
+  adjustWorkers(id, delta) {
+    const v = this.ventures[id];
+    if (!v || !v.unlocked) return;
+
+    const newCount = v.workers + delta;
+    if (newCount < 0 || newCount > v.maxWorkers) return;
+
+    v.workers = newCount;
+    App.Audio.click();
+    this.renderUI();
+  },
+
+  renderUI() {
+    const container = document.getElementById("ventures-content");
+    if (!container) return;
+
+    let html = `
+      <!-- CARAVAN COMMODITY MARKET CARD -->
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header">
+          <span>Crown Trade Caravan &amp; Market</span>
+          <span class="badge badge-mint" id="market-status-badge">Caravan in Port</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px;">
+          Visiting merchants buy your harvest surpluses and sell regional goods. Prices shift with the seasons.
+        </div>
+        <div id="caravan-commodity-table">
+          ${CaravanExchange.getMarketTableHTML()}
+        </div>
+      </div>
+
+      <!-- MASTER ARTISAN PETITIONS -->
+      ${ArtisanPetitions.getPetitionCardHTML()}
+
+      <!-- CROWN VENTURES DIRECTORY -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+    `;
+
+    for (let key in this.ventures) {
+      const v = this.ventures[key];
+      const statusBadge = v.unlocked 
+        ? `<span class="badge badge-cyan">Tier ${v.level}/${v.maxLevel}</span>`
+        : `<span class="badge badge-silver">Unchartered</span>`;
+
+      let inputStr = Object.keys(v.inputs).map(k => `${v.inputs[k]} ${k}`).join(", ") || "None";
+      let outputStr = Object.keys(v.outputs).map(k => `+${v.outputs[k]} ${k}`).join(", ");
+
+      html += `
+        <div class="card" style="border-left: 3px solid ${v.unlocked ? 'var(--cyan)' : 'var(--card-border)'};">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <strong style="color: var(--text-main); font-size: 12px;">${v.name}</strong>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">${v.desc}</div>
+            </div>
+            ${statusBadge}
+          </div>
+
+          ${v.unlocked ? `
+            <div class="data-row" style="font-size: 11px; padding: 4px 0;">
+              <span>Operational Yields / Wk:</span>
+              <span style="color: var(--mint); font-weight: 600;">${outputStr} (${v.renownYield * v.level} Renown)</span>
+            </div>
+            <div class="data-row" style="font-size: 11px; padding: 4px 0;">
+              <span>Input Consumption / Wk:</span>
+              <span style="color: var(--text-muted);">${inputStr}</span>
+            </div>
+            <div class="data-row" style="font-size: 11px; padding: 4px 0;">
+              <span>Assigned Guild Hands:</span>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button class="btn btn-sm" style="padding: 2px 8px; min-height: 26px;" onclick="VentureEngine.adjustWorkers('${v.id}', -1)">-</button>
+                <span style="font-weight: bold; min-width: 16px; text-align: center;">${v.workers}/${v.maxWorkers}</span>
+                <button class="btn btn-sm" style="padding: 2px 8px; min-height: 26px;" onclick="VentureEngine.adjustWorkers('${v.id}', 1)">+</button>
+              </div>
+            </div>
+            ${v.level < v.maxLevel ? `
+              <button class="btn btn-sm btn-cyan" style="margin-top: 4px;" onclick="VentureEngine.upgradeVenture('${v.id}')">
+                Expand to Tier ${v.level + 1} (${v.upgradeCost.timber ? v.upgradeCost.timber + 'T ' : ''}${v.upgradeCost.stone ? v.upgradeCost.stone + 'S ' : ''}${v.upgradeCost.gold}g)
+              </button>
+            ` : '<div style="font-size: 10px; color: var(--mint); text-align: right;">Master Tier Achieved</div>'}
+          ` : `
+            <div style="margin-top: 4px;">
+              <button class="btn btn-sm btn-cyan" onclick="VentureEngine.foundVenture('${v.id}')">
+                Charter Venture (${v.foundCost.timber ? v.foundCost.timber + 'T ' : ''}${v.foundCost.stone ? v.foundCost.stone + 'S ' : ''}${v.foundCost.ironBloom ? v.foundCost.ironBloom + 'I ' : ''}${v.foundCost.gold}g)
+              </button>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+};
+
+// --- 2. DYNAMIC CARAVAN COMMODITY MARKET ---
+window.CaravanExchange = {
+  commodities: {
+    grain: { name: "Grain", buy: 1.2, sell: 0.6, unit: "b" },
+    timber: { name: "Timber", buy: 1.5, sell: 0.8, unit: "logs" },
+    dressedStone: { name: "Stone", buy: 2.2, sell: 1.2, unit: "blocks" },
+    wool: { name: "Raw Wool", buy: 3.5, sell: 2.0, unit: "bales" },
+    honey: { name: "Honey", buy: 4.0, sell: 2.5, unit: "pots" },
+    ale: { name: "Keep Ale", buy: 3.0, sell: 1.8, unit: "casks" }
+  },
+
+  updatePrices() {
+    const C = window.CrownState;
+    const season = SimulationEngine.SEASONS[C.meta.seasonIdx];
+
+    // Seasonal price swings
+    if (season === "Winter") {
+      this.commodities.grain.sell = 1.0;
+      this.commodities.grain.buy = 1.8; // Grain scarce in winter
+      this.commodities.timber.sell = 1.2;
+      this.commodities.timber.buy = 2.0; // Timber needed for fires
+    } else if (season === "Autumn") {
+      this.commodities.grain.sell = 0.5;
+      this.commodities.grain.buy = 0.9; // Grain surplus in autumn harvest
+      this.commodities.wool.sell = 2.4;
+      this.commodities.wool.buy = 4.0;
+    } else if (season === "Summer") {
+      this.commodities.dressedStone.sell = 1.6;
+      this.commodities.dressedStone.buy = 2.6; // Peak construction season
+      this.commodities.ale.sell = 2.2;
+      this.commodities.ale.buy = 3.5;
+    } else {
+      // Spring
+      this.commodities.grain.sell = 0.8;
+      this.commodities.grain.buy = 1.4;
+      this.commodities.honey.sell = 3.0;
+      this.commodities.honey.buy = 4.8;
+    }
+  },
+
+  trade(commodityKey, action, qty = 5) {
+    const C = window.CrownState;
+    const item = this.commodities[commodityKey];
+    if (!item) return;
+
+    if (action === "buy") {
+      const cost = Math.round(item.buy * qty);
+      if (C.treasury.gold < cost) {
+        App.log(`Insufficient treasury gold for ${qty} ${item.name} (${cost}g required).`, "notice");
+        return;
+      }
+      C.treasury.gold -= cost;
+      C.treasury[commodityKey] = (C.treasury[commodityKey] || 0) + qty;
+      App.Audio.goldCoins();
+      App.log(`Purchased ${qty} ${item.name} from trade caravan for ${cost} gold.`, "notice");
+    } else if (action === "sell") {
+      if ((C.treasury[commodityKey] || 0) < qty) {
+        App.log(`Insufficient ${item.name} in stores to sell ${qty}.`, "notice");
+        return;
+      }
+      const earnings = Math.round(item.sell * qty);
+      C.treasury[commodityKey] -= qty;
+      C.treasury.gold += earnings;
+      App.Audio.goldCoins();
+      App.log(`Consigned ${qty} ${item.name} to merchants for +${earnings} gold.`, "royal");
+    }
+
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    VentureEngine.renderUI();
+  },
+
+  getMarketTableHTML() {
+    const C = window.CrownState;
+    let rows = "";
+
+    for (let key in this.commodities) {
+      const item = this.commodities[key];
+      const stock = C.treasury[key] || 0;
+
+      rows += `
+        <div class="data-row" style="font-size: 11px;">
+          <div>
+            <strong>${item.name}</strong> 
+            <span style="color: var(--text-muted); font-size: 10px;">(In Stock: ${stock})</span><br>
+            <span style="color: var(--mint);">Sell: ${item.sell.toFixed(1)}g</span> | 
+            <span style="color: var(--silver);">Buy: ${item.buy.toFixed(1)}g</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button class="btn btn-sm btn-cyan" style="padding: 2px 8px; min-height: 26px;" onclick="CaravanExchange.trade('${key}', 'buy', 5)">Buy 5</button>
+            <button class="btn btn-sm" style="padding: 2px 8px; min-height: 26px;" onclick="CaravanExchange.trade('${key}', 'sell', 5)">Sell 5</button>
+          </div>
+        </div>
+      `;
+    }
+    return rows;
+  }
+};
+
+// --- 3. MASTER ARTISAN PETITIONS & ROYAL VISITORS ---
+window.ArtisanPetitions = {
+  activePetition: null,
+
+  pool: [
+    {
+      id: "master_brewer",
+      title: "Master Maltster of Ghent",
+      text: "A master brewer seeking royal sanctuary offers to teach your guild secret recipes for spiced winter ales.",
+      cost: { gold: 35, grain: 20 },
+      boonText: "+30 Ale, +40 Renown, and Brewery outputs boosted permanently.",
+      grant() {
+        CrownState.treasury.ale += 30;
+        CrownState.crown.renownPoints += 40;
+        VentureEngine.ventures.brewery.outputs.ale += 1;
+      }
+    },
+    {
+      id: "illuminator",
+      title: "Illuminated Master of Padua",
+      text: "A traveling master scribe offers to craft a gilded royal ledger detailing your dynasty's ancient virtues.",
+      cost: { gold: 50, timber: 20 },
+      boonText: "+80 Renown and permanently elevates contentment by +5%.",
+      grant() {
+        CrownState.crown.renownPoints += 80;
+        CrownState.crown.contentment = Math.min(100, CrownState.crown.contentment + 5);
+      }
+    },
+    {
+      id: "cathedral_mason",
+      title: "Master Mason of Strasbourg",
+      text: "An architect who worked on the great cathedrals petitions to survey your ashlar defenses and reinforce load-bearing arches.",
+      cost: { gold: 45, stone: 30 },
+      boonText: "+50 Renown and +25 Dressed Stone into royal stockpiles.",
+      grant() {
+        CrownState.crown.renownPoints += 50;
+        CrownState.treasury.dressedStone += 25;
+      }
+    },
+    {
+      id: "silk_consort",
+      title: "Flemish Textile Emissary",
+      text: "An envoy from the low-country weavers seeks to establish a preferential wool-consign trade route with your keep.",
+      cost: { gold: 30, wool: 15 },
+      boonText: "+75 Gold from trade contracts and +30 Renown.",
+      grant() {
+        CrownState.treasury.gold += 75;
+        CrownState.crown.renownPoints += 30;
+      }
+    }
+  ],
+
+  checkPetitions() {
+    // 30% chance per turn if no petition is currently active
+    if (!this.activePetition && Math.random() < 0.30) {
+      const idx = Math.floor(Math.random() * this.pool.length);
+      this.activePetition = this.pool[idx];
+      App.log(`Royal visitor at the gate: ${this.activePetition.title} requests an audience.`, "royal");
+      App.Audio.chime();
+    }
+  },
+
+  acceptPetition() {
+    const C = window.CrownState;
+    const p = this.activePetition;
+    if (!p) return;
+
+    const cost = p.cost;
+    if ((C.treasury.gold < (cost.gold || 0)) ||
+        (C.treasury.grain < (cost.grain || 0)) ||
+        (C.treasury.stone < (cost.stone || 0)) ||
+        (C.treasury.timber < (cost.timber || 0)) ||
+        (C.treasury.wool < (cost.wool || 0))) {
+      App.log(`Treasury lacks the requested stipends for ${p.title}.`, "notice");
+      return;
+    }
+
+    C.treasury.gold -= (cost.gold || 0);
+    C.treasury.grain -= (cost.grain || 0);
+    C.treasury.stone -= (cost.stone || 0);
+    C.treasury.timber -= (cost.timber || 0);
+    C.treasury.wool -= (cost.wool || 0);
+
+    p.grant();
+    App.Audio.royalFanfare();
+    App.log(`Petition granted: ${p.title} takes up service in the keep!`, "royal");
+
+    this.activePetition = null;
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    VentureEngine.renderUI();
+  },
+
+  declinePetition() {
+    if (!this.activePetition) return;
+    App.log(`The crown politely declines the petition of ${this.activePetition.title}.`, "notice");
+    this.activePetition = null;
+    VentureEngine.renderUI();
+  },
+
+  getPetitionCardHTML() {
+    const p = this.activePetition;
+    if (!p) return "";
+
+    const costStr = Object.keys(p.cost).map(k => `${p.cost[k]} ${k}`).join(", ");
+
+    return `
+      <div class="card" style="border: 1px solid var(--cyan); background: var(--card-surface); margin-bottom: 8px;">
+        <div class="card-header" style="color: var(--cyan);">
+          <span>Royal Audience: ${p.title}</span>
+          <span class="badge badge-cyan">Petition</span>
+        </div>
+        <div style="font-size: 11px; line-height: 1.4; color: var(--text-main); margin-top: 4px;">
+          ${p.text}
+        </div>
+        <div style="font-size: 10px; color: var(--mint); margin-top: 4px;">
+          • Boon: ${p.boonText}
+        </div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+          • Demanded Stipend: ${costStr}
+        </div>
+        <div class="btn-group" style="margin-top: 6px;">
+          <button class="btn btn-sm btn-cyan" onclick="ArtisanPetitions.acceptPetition()">Grant Audience</button>
+          <button class="btn btn-sm" onclick="ArtisanPetitions.declinePetition()">Dismiss</button>
+        </div>
+      </div>
+    `;
+  }
+};
+
+// Hook into master turn resolution and tab switcher
+(function hookSimulationAndTabs() {
+  if (window.SimulationEngine) {
+    const originalAdvance = SimulationEngine.advance.bind(SimulationEngine);
+    SimulationEngine.advance = function() {
+      originalAdvance();
+      VentureEngine.processVentures();
+      CaravanExchange.updatePrices();
+      ArtisanPetitions.checkPetitions();
+      if (App.activeTab === 'ventures') VentureEngine.renderUI();
+    };
+  }
+
+  const originalSwitchTab = App.switchTab.bind(App);
+  App.switchTab = function(tabId) {
+    originalSwitchTab(tabId);
+    if (tabId === 'ventures') {
+      VentureEngine.renderUI();
+    }
+  };
+})();
+/* ==========================================================================
+   CHUNK 5: UI CONTROLLER, CASTELLAN'S CODEX & SOVEREIGN GOD MODE
+   ========================================================================== */
+
+// --- 1. DEMESNE & CROP MANAGEMENT VIEW ---
+window.DemesneView = {
+  render() {
+    const container = document.getElementById("demesne-content");
+    if (!container) return;
+
+    let tilledCount = 0;
+    let wheatCount = 0;
+    let barleyCount = 0;
+    let peasCount = 0;
+    let pastureCount = 0;
+    let totalFertility = 0;
+    let totalNitrogen = 0;
+    let fieldTiles = 0;
+
+    for (let key in window.KEEP_GRID) {
+      const tile = window.KEEP_GRID[key];
+      if (tile.z !== 0) continue;
+
+      if (tile.tileId === "tilled_field" || tile.tileId === "loam" || tile.tileId === "pasture") {
+        fieldTiles++;
+        totalFertility += (tile.soilFertility || 0);
+        totalNitrogen += (tile.soilNitrogen || 0);
+
+        if (tile.crop === "wheat") wheatCount++;
+        else if (tile.crop === "barley") barleyCount++;
+        else if (tile.crop === "peas") peasCount++;
+        else if (tile.tileId === "pasture") pastureCount++;
+        else if (tile.tileId === "tilled_field") tilledCount++;
+      }
+    }
+
+    const avgFert = fieldTiles > 0 ? Math.round((totalFertility / fieldTiles) * 100) : 85;
+    const avgNitro = fieldTiles > 0 ? Math.round((totalNitrogen / fieldTiles) * 100) : 70;
+    const currentSeason = SimulationEngine.SEASONS[CrownState.meta.seasonIdx];
+
+    container.innerHTML = `
+      <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
+        The three-field system alternates nutrient-draining grains with soil-healing legumes and fallow grazing to maintain sustainable yields without synthetic fertilizers.
+      </div>
+
+      <!-- Soil Health Overview -->
+      <div class="card" style="background: var(--card-surface); margin-bottom: 8px;">
+        <div class="card-header">
+          <span>Demesne Soil Chemistry</span>
+          <span class="badge badge-mint">${currentSeason} Rotation</span>
+        </div>
+        <div class="data-row">
+          <span>Average Soil Fertility (Organic Matter):</span>
+          <span style="color: var(--mint); font-weight: bold;">${avgFert}%</span>
+        </div>
+        <div class="data-row">
+          <span>Average Nitrogen Saturation:</span>
+          <span style="color: var(--cyan); font-weight: bold;">${avgNitro}%</span>
+        </div>
+      </div>
+
+      <!-- Crop Census -->
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header">Strip Acreage Distribution</div>
+        <div class="data-row">
+          <span>Winter Wheat Strips (Heavy Bread Grain):</span>
+          <span style="color: var(--text-main); font-weight: bold;">${wheatCount} strips</span>
+        </div>
+        <div class="data-row">
+          <span>Spring Barley Strips (Brewing & Malt):</span>
+          <span style="color: var(--text-main); font-weight: bold;">${barleyCount} strips</span>
+        </div>
+        <div class="data-row">
+          <span>Field Peas & Legumes (Nitrogen Restorers):</span>
+          <span style="color: var(--mint); font-weight: bold;">${peasCount} strips</span>
+        </div>
+        <div class="data-row">
+          <span>Unplanted Tilled Strips:</span>
+          <span style="color: var(--silver);">${tilledCount} strips</span>
+        </div>
+        <div class="data-row">
+          <span>Resting Fallow Pastures:</span>
+          <span style="color: var(--cyan);">${pastureCount} strips</span>
+        </div>
+      </div>
+
+      <!-- Mass Agricultural Directives -->
+      <div class="card">
+        <div class="card-header">Crown Sowing Directives</div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">
+          Commands all idle tilled earth on Level 0 to be sown in a single unified operation:
+        </div>
+        <div class="btn-group" style="margin-bottom: 6px;">
+          <button class="btn btn-sm btn-cyan" onclick="DemesneView.massSow('wheat')">Sow All: Winter Wheat</button>
+          <button class="btn btn-sm" onclick="DemesneView.massSow('barley')">Sow All: Spring Barley</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-mint" onclick="DemesneView.massSow('peas')">Sow All: Field Peas</button>
+          <button class="btn btn-sm" onclick="DemesneView.convertAllPasture()">Convert Idle to Pasture</button>
+        </div>
+      </div>
+    `;
+  },
+
+  massSow(cropId) {
+    let sown = 0;
+    for (let key in window.KEEP_GRID) {
+      const tile = window.KEEP_GRID[key];
+      if (tile.z === 0 && (tile.tileId === "tilled_field" || tile.tileId === "loam") && !tile.crop) {
+        tile.tileId = "tilled_field";
+        tile.crop = cropId;
+        tile.growthStage = 1;
+        sown++;
+      }
+    }
+    if (sown > 0) {
+      App.Audio.harvestRustle();
+      App.log(`By royal writ, ${sown} agricultural strips sown with ${window.CROP_CATALOG[cropId].name}.`, "harvest");
+      SimulationEngine.save();
+      KeepRenderer.render();
+      this.render();
+    } else {
+      App.log("No idle tilled strips available to sow.", "notice");
+    }
+  },
+
+  convertAllPasture() {
+    let converted = 0;
+    for (let key in window.KEEP_GRID) {
+      const tile = window.KEEP_GRID[key];
+      if (tile.z === 0 && tile.tileId === "loam" && !tile.crop) {
+        tile.tileId = "pasture";
+        converted++;
+      }
+    }
+    if (converted > 0) {
+      App.Audio.click();
+      App.log(`${converted} virgin loam tiles converted to fallow clover pasture for sheep grazing.`, "notice");
+      SimulationEngine.save();
+      KeepRenderer.render();
+      this.render();
+    }
+  }
+};
+
+// --- 2. SERFDOM & CORVÉE LABOR VIEW ---
+window.SerfView = {
+  render() {
+    const container = document.getElementById("serfs-content");
+    if (!container) return;
+
+    const C = window.CrownState;
+
+    let html = `
+      <!-- Feudal Levers Card -->
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header">
+          <span>Feudal Exaction &amp; Tithes</span>
+          <span class="badge ${C.crown.contentment >= 75 ? 'badge-mint' : 'badge-silver'}">
+            Contentment: ${C.crown.contentment}%
+          </span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px;">
+          Corvée is unpaid forced castle labor. Exceeding 3 days per week reduces peasant contentment and prompts emigration.
+        </div>
+        <div class="data-row">
+          <span>Mandatory Castle Corvée:</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn btn-sm" style="padding: 2px 8px; min-height: 26px;" onclick="SerfView.adjustCorvee(-1)">-</button>
+            <strong style="color: var(--cyan); min-width: 60px; text-align: center;">${C.taxation.corveeDaysOwed} Days/Wk</strong>
+            <button class="btn btn-sm" style="padding: 2px 8px; min-height: 26px;" onclick="SerfView.adjustCorvee(1)">+</button>
+          </div>
+        </div>
+        <div class="data-row">
+          <span>Crown Grain Tithe Demand:</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="btn btn-sm" style="padding: 2px 8px; min-height: 26px;" onclick="SerfView.adjustTithe(-2)">-</button>
+            <strong style="color: var(--mint); min-width: 60px; text-align: center;">${C.taxation.grainTithePct}% Tithe</strong>
+            <button class="btn btn-sm" style="padding: 2px 8px; min-height: 26px;" onclick="SerfView.adjustTithe(2)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Serf Census Roster -->
+      <div class="card">
+        <div class="card-header">
+          <span>Crown Manorial Roll (${window.SerfRoster.length} Households)</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto; padding-right: 2px;">
+    `;
+
+    window.SerfRoster.forEach(serf => {
+      const casteBadge = (serf.caste === "villein")
+        ? `<span class="badge badge-cyan">Villein</span>`
+        : ((serf.caste === "artisan") ? `<span class="badge badge-mint">Artisan</span>` : `<span class="badge badge-silver">Cottar</span>`);
+
+      html += `
+        <div class="data-row" style="font-size: 11px; padding: 6px 0;">
+          <div>
+            <strong>${serf.name}</strong> ${casteBadge} ${serf.draftOx ? '<span style="font-size: 9px; color: var(--mint);">[Ox Team]</span>' : ''}<br>
+            <span style="font-size: 10px; color: var(--text-muted);">
+              Health: ${serf.health}% | Food: ${serf.nourishment}% | Fealty: ${serf.contentment}%
+            </span>
+          </div>
+          <div>
+            <select onchange="SerfView.assignTask('${serf.id}', this.value)" style="background: var(--card-surface); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 4px; padding: 4px 6px; font-size: 11px;">
+              <option value="plant" ${serf.task === 'plant' ? 'selected' : ''}>Sow Fields</option>
+              <option value="harvest" ${serf.task === 'harvest' ? 'selected' : ''}>Harvest Grain</option>
+              <option value="quarry" ${serf.task === 'quarry' ? 'selected' : ''}>Quarry Stone</option>
+              <option value="timber" ${serf.task === 'timber' ? 'selected' : ''}>Fell Timber</option>
+              <option value="craft" ${serf.task === 'craft' ? 'selected' : ''}>Weave Cloth</option>
+              <option value="brew" ${serf.task === 'brew' ? 'selected' : ''}>Malt Ale</option>
+              <option value="forge" ${serf.task === 'forge' ? 'selected' : ''}>Smithy Tools</option>
+              <option value="herd" ${serf.task === 'herd' ? 'selected' : ''}>Herd Sheep</option>
+              <option value="build" ${serf.task === 'build' ? 'selected' : ''}>Keep Masonry</option>
+            </select>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  },
+
+  adjustCorvee(delta) {
+    CrownState.taxation.corveeDaysOwed = Math.max(1, Math.min(6, CrownState.taxation.corveeDaysOwed + delta));
+    App.Audio.click();
+    this.render();
+  },
+
+  adjustTithe(delta) {
+    CrownState.taxation.grainTithePct = Math.max(4, Math.min(30, CrownState.taxation.grainTithePct + delta));
+    App.Audio.click();
+    this.render();
+  },
+
+  assignTask(serfId, task) {
+    const serf = window.SerfRoster.find(s => s.id === serfId);
+    if (serf) {
+      serf.task = task;
+      App.Audio.click();
+      App.log(`Assigned ${serf.name} to ${task}.`, "notice");
+      SimulationEngine.save();
+    }
+  }
+};
+
+// --- 3. CASTELLAN'S FIELD CODEX (MANUAL) ---
+window.CodexView = {
+  render() {
+    const container = document.getElementById("codex-content");
+    if (!container) return;
+
+    container.innerHTML = `
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 11px; line-height: 1.5;">
+
+        <div class="card">
+          <div class="card-header">Chapter I: Peaceful Sovereign Progression</div>
+          <div>
+            <strong>Throne and Plow</strong> models a sovereign peaceful reign. You advance not through bloodshed, but through architectural grandeur, agricultural abundance, industrial exports, and regional charter annexation.
+            <br><br>
+            • <strong>Sovereign Renown:</strong> Your standing increases as you erect ashlar masonry, chart new provinces, stockpile gold, and keep your citizens contented.<br>
+            • <strong>Prestige Tiers:</strong> Rise from <em>Tithe Lord</em> to <em>Landed Thane</em>, <em>High Castellan</em>, <em>Baron Sovereign</em>, and finally <em>Grand Monarch</em>.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Chapter II: Five-Tier Tactical Keep Architecture</div>
+          <div>
+            The castle grid is a 16×16 spatial matrix spanning five distinct vertical elevations:
+            <br><br>
+            • <strong>Level -2 (Deep Undercroft):</strong> Excavated into rock bedrock. Houses royal wine cellars, mountain cisterns, and secured gold strongrooms.<br>
+            • <strong>Level -1 (Storage Vaults):</strong> Stone granary bases built here halve grain spoilage from moisture and vermin.<br>
+            • <strong>Level 0 (The Bailey &amp; Demesne):</strong> Ground surface supporting the great keep, ashlar curtain walls, peasant hovels, and tilled strip fields.<br>
+            • <strong>Level +1 (Wallwalk &amp; Parapets):</strong> Crenelated ramparts and the Lord's Solar. Requires solid stone curtain walls directly beneath on Level 0.<br>
+            • <strong>Level +2 (High Spires &amp; Towers):</strong> Grand spires, rookeries, and astronomy chambers. Must rest directly upon Level +1 turrets and solar foundations.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Chapter III: Three-Field Agrarian Rotation</div>
+          <div>
+            • <strong>Winter Wheat / Rye (Autumn Planting):</strong> Sown in Autumn, harvested in late Summer. Generates the highest grain tonnage for the keep, but drains nitrogen and organic matter.<br>
+            • <strong>Spring Barley (Spring Planting):</strong> Essential for brewing malt ale and feeding draft animals.<br>
+            • <strong>Field Peas (Legumes):</strong> Nitrogen-fixing pulses. Planting peas naturally recovers soil nitrogen without leaving fields unproductive.<br>
+            • <strong>Fallow Pasture:</strong> Idle land grazed by sheep to regenerate baseline soil fertility.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Chapter IV: Feudal Castes &amp; The Corvée</div>
+          <div>
+            • <strong>Villeins:</strong> Substantial tenants with plow oxen. Primary drivers of agricultural output.<br>
+            • <strong>Cottars:</strong> Manual day laborers who cut ashlar stone, fell timber, and dig subterranean vaults.<br>
+            • <strong>Artisans:</strong> Specialized masons, weavers, and brewmasters who operate guild ventures.<br>
+            • <strong>The Corvée Limit:</strong> Demanding $\le 3$ days/week preserves peasant happiness. Setting corvée to 4–6 days causes exhaustion and silent migration to neighboring lands.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Chapter V: The 64-Province Sovereign Realm</div>
+          <div>
+            Switch to the <strong>Realm</strong> tab to inspect an 8×8 regional grid. Uncharted lands are obscured by fog-of-war. Dispatch royal surveyors for 25g to chart local biomes, then issue Crown Charters to incorporate fertile basins, ancient timberlands, and limestone bluffs into your domain.
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+};
+
+// --- 4. DIVINE ROYAL CONSOLE (GOD MODE) ---
+window.GodMode = {
+  render() {
+    const container = document.getElementById("god-content");
+    if (!container) return;
+
+    container.innerHTML = `
+      <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
+        Divine sovereign directives bypass resource limitations for instant testing, layout architecture, and rapid expansion.
+      </div>
+
+      <div class="card" style="margin-bottom: 8px; border-color: var(--cyan);">
+        <div class="card-header" style="color: var(--cyan);">Treasury Grants</div>
+        <div class="btn-group" style="margin-bottom: 6px;">
+          <button class="btn btn-sm btn-cyan" onclick="GodMode.grantResources('gold', 1000)">+1,000 Gold</button>
+          <button class="btn btn-sm btn-cyan" onclick="GodMode.grantResources('grain', 2000)">+2,000 Grain</button>
+        </div>
+        <div class="btn-group" style="margin-bottom: 6px;">
+          <button class="btn btn-sm" onclick="GodMode.grantResources('dressedStone', 500)">+500 Stone</button>
+          <button class="btn btn-sm" onclick="GodMode.grantResources('timber', 500)">+500 Timber</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm" onclick="GodMode.grantResources('ironBloom', 100)">+100 Iron</button>
+          <button class="btn btn-sm" onclick="GodMode.grantResources('ale', 100)">+100 Ale</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header">Crown Authority &amp; Citizens</div>
+        <div class="btn-group" style="margin-bottom: 6px;">
+          <button class="btn btn-sm btn-mint" onclick="GodMode.maxContentment()">Max Contentment (100%)</button>
+          <button class="btn btn-sm" onclick="GodMode.grantRenown(500)">+500 Renown</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm" onclick="GodMode.summonSerf()">Summon Household</button>
+          <button class="btn btn-sm" onclick="GodMode.forcePetition()">Trigger Royal Visitor</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header">Time &amp; Seasons</div>
+        <div class="btn-group-3">
+          <button class="btn btn-sm" onclick="GodMode.setSeason(0)">Set Spring</button>
+          <button class="btn btn-sm" onclick="GodMode.setSeason(1)">Set Summer</button>
+          <button class="btn btn-sm" onclick="GodMode.setSeason(2)">Set Autumn</button>
+        </div>
+        <button class="btn btn-sm" style="margin-top: 6px;" onclick="GodMode.setSeason(3)">Set Winter</button>
+      </div>
+
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header">Rapid Keep Fortification</div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-cyan" onclick="GodMode.raiseOuterCurtain()">Encircle Keep Walls</button>
+          <button class="btn btn-sm" onclick="GodMode.annexAllRealm()">Annex All 64 Provinces</button>
+        </div>
+      </div>
+
+      <button class="btn btn-sm" style="background: var(--card-surface); color: var(--text-muted); border-color: var(--card-border);" onclick="SimulationEngine.reset()">
+        Wipe &amp; Reset Save State
+      </button>
+    `;
+  },
+
+  grantResources(key, amount) {
+    CrownState.treasury[key] = (CrownState.treasury[key] || 0) + amount;
+    App.Audio.goldCoins();
+    App.log(`[CROWN DECREE] Granted +${amount} ${key} to royal stores.`, "royal");
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    this.render();
+  },
+
+  grantRenown(amt) {
+    CrownState.crown.renownPoints += amt;
+    App.Audio.royalFanfare();
+    App.log(`[CROWN DECREE] Bestowed +${amt} Sovereign Renown!`, "royal");
+    SimulationEngine.resolveRenownAndPrestige();
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+  },
+
+  maxContentment() {
+    CrownState.crown.contentment = 100;
+    window.SerfRoster.forEach(s => {
+      s.health = 100;
+      s.nourishment = 100;
+      s.contentment = 100;
+    });
+    App.Audio.chime();
+    App.log(`[CROWN DECREE] Realm contentment and citizen vitality restored to 100%.`, "royal");
+    SimulationEngine.save();
+  },
+
+  summonSerf() {
+    const newId = "s_god_" + Date.now();
+    window.SerfRoster.push({
+      id: newId,
+      name: "Crown Freeman " + (window.SerfRoster.length + 1),
+      caste: "villein",
+      task: "plant",
+      health: 100,
+      nourishment: 100,
+      contentment: 100,
+      draftOx: true,
+      x: 3, y: 3, z: 0
+    });
+    App.Audio.royalFanfare();
+    App.log(`[CROWN DECREE] A loyal freeman household has sworn fealty to the keep!`, "royal");
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+  },
+
+  forcePetition() {
+    ArtisanPetitions.activePetition = null;
+    ArtisanPetitions.checkPetitions();
+    App.log(`[CROWN DECREE] Dispatched summons for royal artisan petitioners.`, "notice");
+    if (App.activeTab === 'ventures') VentureEngine.renderUI();
+  },
+
+  setSeason(idx) {
+    CrownState.meta.seasonIdx = idx;
+    CrownState.meta.weekTick = 1;
+    App.Audio.chime();
+    App.log(`[CROWN DECREE] The heavens shift the realm directly into ${SimulationEngine.SEASONS[idx]}.`, "notice");
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    KeepRenderer.render();
+  },
+
+  raiseOuterCurtain() {
+    for (let x = 4; x <= 11; x++) {
+      for (let y = 4; y <= 11; y++) {
+        if (x === 4 || x === 11 || y === 4 || y === 11) {
+          const key = `${x}_${y}_0`;
+          if (window.KEEP_GRID[key]) {
+            window.KEEP_GRID[key].tileId = "curtain_wall";
+            window.KEEP_GRID[key].crop = null;
+          }
+          const walkKey = `${x}_${y}_1`;
+          if (window.KEEP_GRID[walkKey]) {
+            window.KEEP_GRID[walkKey].tileId = "rampart_walk";
+          }
+        }
+      }
+    }
+    App.Audio.stoneThud();
+    App.log(`[CROWN DECREE] Concentric curtain walls and ramparts raised around the keep!`, "royal");
+    SimulationEngine.save();
+    KeepRenderer.render();
+  },
+
+  annexAllRealm() {
+    for (let key in window.REALM_PROVINCES) {
+      window.REALM_PROVINCES[key].status = "annexed";
+    }
+    App.Audio.royalFanfare();
+    App.log(`[CROWN DECREE] All 64 provinces of the overland realm united under Crown Rule!`, "royal");
+    SimulationEngine.save();
+    if (window.RealmRenderer) window.RealmRenderer.render();
+  }
+};
+
+// --- 5. TAB SWITCHER INTEGRATION HOOK ---
+(function hookTabViews() {
+  const prevSwitch = App.switchTab.bind(App);
+  App.switchTab = function(tabId) {
+    prevSwitch(tabId);
+    if (tabId === 'demesne') DemesneView.render();
+    else if (tabId === 'serfs') SerfView.render();
+    else if (tabId === 'codex') CodexView.render();
+    else if (tabId === 'god') GodMode.render();
+  };
+})();
+
+window.addEventListener('DOMContentLoaded', () => {
+  App.setZLevel(0);
+});
+</script>
+</body>
+</html>
