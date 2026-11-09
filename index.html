@@ -8,23 +8,28 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     :root {
-      --bg: #07090e;
-      --card-bg: #0e131d;
-      --card-surface: #151c2a;
-      --card-border: #1e283b;
+      --bg: #06090e;
+      --card-bg: #0b111a;
+      --card-surface: #121a27;
+      --card-border: #1d2a3d;
       --card-border-focus: #38bdf8;
       
+      /* High-contrast blueprint palette */
+      --blueprint-bg: #070d18;
+      --blueprint-grid: #132238;
+      --blueprint-major: #1f3657;
+      --blueprint-line: #38bdf8;
+      
       --text-main: #f1f5f9;
-      --text-muted: #8191a6;
+      --text-muted: #8295ad;
       --cyan: #38bdf8;
-      --cyan-soft: rgba(56, 189, 248, 0.14);
       --cyan-bright: #7dd3fc;
+      --cyan-soft: rgba(56, 189, 248, 0.15);
       --mint: #34d399;
-      --mint-soft: rgba(52, 211, 153, 0.14);
+      --mint-soft: rgba(52, 211, 153, 0.15);
       --gold: #fbbf24;
-      --gold-soft: rgba(251, 191, 36, 0.14);
+      --gold-soft: rgba(251, 191, 36, 0.15);
       --silver: #cbd5e1;
-      --charcoal: #1e293b;
       --danger: #f87171;
       
       --safe-top: env(safe-area-inset-top, 0px);
@@ -43,7 +48,7 @@
     body {
       background-color: var(--bg);
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "SF Pro Text", monospace;
+      font-family: ui-monospace, "SF Mono", "Segoe UI Mono", Menlo, monospace;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -59,7 +64,7 @@
       padding-top: max(8px, var(--safe-top));
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
       z-index: 50;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     }
@@ -84,12 +89,12 @@
     .hud-stat {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .hud-stat span.label {
       color: var(--text-muted);
-      font-size: 10px;
+      font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -97,7 +102,6 @@
     .hud-stat span.val {
       color: var(--text-main);
       font-weight: 700;
-      font-family: ui-monospace, "SF Mono", monospace;
     }
 
     .hud-stat span.val.cyan { color: var(--cyan); }
@@ -110,10 +114,10 @@
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 10px;
+      padding: 8px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -131,7 +135,7 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 8px;
-      padding: 12px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -144,75 +148,73 @@
       color: var(--cyan);
       font-weight: 700;
       border-bottom: 1px solid var(--card-border);
-      padding-bottom: 6px;
+      padding-bottom: 5px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    /* MAP STYLING & TOOLBAR */
-    .map-surface-wrapper {
+    /* BLUEPRINT GRAPH PAPER FRAME */
+    .blueprint-wrapper {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 8px;
-      background: #04060a;
-      border: 1px solid var(--card-border);
+      background: var(--blueprint-bg);
+      border: 2px solid var(--blueprint-major);
       border-radius: 8px;
       padding: 8px;
       position: relative;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
     }
 
-    /* ELEVATION SLICER */
-    .elevation-bar {
-      display: flex;
+    /* ELEVATION SLICER BAR */
+    .elevation-slicer {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
       gap: 4px;
       width: 100%;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .elev-btn {
-      flex: 1;
-      min-width: 60px;
+    .elev-slice {
       background: var(--card-surface);
-      color: var(--text-muted);
       border: 1px solid var(--card-border);
       border-radius: 4px;
-      padding: 5px 4px;
-      font-size: 10px;
+      padding: 5px 2px;
+      color: var(--text-muted);
+      font-size: 9px;
       font-weight: 700;
       cursor: pointer;
       text-align: center;
       display: flex;
       flex-direction: column;
       gap: 2px;
+      transition: all 0.15s;
     }
 
-    .elev-btn.active {
+    .elev-slice.active {
       background: var(--cyan-soft);
       border-color: var(--cyan);
-      color: var(--cyan);
+      color: var(--cyan-bright);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
     }
 
-    .elev-tag {
+    .elev-slice .tag {
       font-size: 8px;
       font-weight: normal;
-      color: var(--text-muted);
+      opacity: 0.8;
     }
-    .elev-btn.active .elev-tag { color: var(--cyan-bright); }
 
-    .map-canvas-container {
+    /* CANVAS CONTAINER WITH RULERS */
+    .canvas-viewport-box {
       position: relative;
       width: 100%;
-      max-width: 380px;
+      max-width: 384px;
       aspect-ratio: 1;
-      background: #020306;
-      border: 1px solid var(--charcoal);
-      border-radius: 6px;
+      background: var(--blueprint-bg);
+      border: 1px solid var(--blueprint-line);
+      border-radius: 4px;
       overflow: hidden;
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
     }
 
     canvas {
@@ -222,8 +224,8 @@
       image-rendering: pixelated;
     }
 
-    /* ACTION BRUSH TOOLBAR */
-    .brush-toolbar {
+    /* FLOATING TOOLBAR */
+    .brush-strip {
       display: flex;
       gap: 4px;
       width: 100%;
@@ -232,30 +234,31 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    .brush-btn {
+    .tool-btn {
       flex: 1;
-      min-width: 50px;
+      min-width: 48px;
       background: var(--card-surface);
       border: 1px solid var(--card-border);
       border-radius: 6px;
-      padding: 6px 4px;
+      padding: 6px 2px;
       color: var(--text-muted);
-      font-size: 10px;
+      font-size: 9px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 3px;
       cursor: pointer;
+      font-family: inherit;
     }
 
-    .brush-btn.active {
+    .tool-btn.active {
       background: var(--cyan-soft);
       border-color: var(--cyan);
-      color: var(--cyan);
+      color: var(--cyan-bright);
       font-weight: bold;
     }
 
-    .brush-icon {
+    .tool-btn span.icon {
       font-size: 14px;
     }
 
@@ -264,16 +267,16 @@
       background: var(--card-surface);
       color: var(--text-main);
       border: 1px solid var(--card-border);
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11px;
       font-family: inherit;
       cursor: pointer;
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 6px;
-      min-height: 40px;
+      min-height: 38px;
       transition: background 0.15s, border-color 0.15s;
     }
 
@@ -283,25 +286,31 @@
     }
 
     .btn-sm {
-      min-height: 30px;
-      padding: 4px 8px;
-      font-size: 11px;
+      min-height: 28px;
+      padding: 3px 6px;
+      font-size: 10px;
     }
 
     .btn-cyan {
       background: var(--cyan);
-      color: #040810;
+      color: #030812;
       font-weight: 700;
       border-color: var(--cyan);
     }
-
     .btn-cyan:active { background: var(--cyan-bright); }
 
     .btn-mint {
       background: var(--mint-soft);
       color: var(--mint);
       border-color: var(--mint);
-      font-weight: 600;
+      font-weight: 700;
+    }
+
+    .btn-gold {
+      background: var(--gold-soft);
+      color: var(--gold);
+      border-color: var(--gold);
+      font-weight: 700;
     }
 
     .btn-group {
@@ -313,7 +322,7 @@
     .btn-group-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
+      gap: 4px;
     }
 
     /* BADGES & ROWS */
@@ -321,8 +330,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 12px;
-      padding: 6px 0;
+      font-size: 11px;
+      padding: 5px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
     .data-row:last-child { border-bottom: none; }
@@ -330,7 +339,7 @@
     .badge {
       padding: 2px 6px;
       border-radius: 4px;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -343,13 +352,12 @@
 
     /* LOG STREAM */
     #sovereign-log-stream {
-      font-family: ui-monospace, "SF Mono", monospace;
-      font-size: 11px;
+      font-size: 10px;
       line-height: 1.4;
       display: flex;
       flex-direction: column-reverse;
       gap: 4px;
-      max-height: 120px;
+      max-height: 110px;
       overflow-y: auto;
       padding-right: 4px;
     }
@@ -367,11 +375,11 @@
     #sovereign-dock {
       background: var(--card-bg);
       border-top: 1px solid var(--card-border);
-      padding: 6px 4px;
-      padding-bottom: max(6px, var(--safe-bottom));
+      padding: 4px 2px;
+      padding-bottom: max(4px, var(--safe-bottom));
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 3px;
+      gap: 2px;
       z-index: 50;
       box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.6);
     }
@@ -380,16 +388,16 @@
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 9px;
+      font-size: 8px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
       font-family: inherit;
       cursor: pointer;
       padding: 4px 0;
       border-radius: 6px;
-      min-height: 42px;
+      min-height: 40px;
       justify-content: center;
     }
 
@@ -400,7 +408,7 @@
     }
 
     .dock-tab-icon {
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1;
     }
   </style>
@@ -413,18 +421,18 @@
       <div class="hud-title"><span>👑</span> Throne &amp; Plow</div>
       <div class="hud-stat">
         <span class="label">Reign:</span>
-        <span class="val cyan" id="hud-season-year">Spring (Wk 1), Yr 1</span>
+        <span class="val cyan" id="hud-season-year">Spring (W1) Y1</span>
       </div>
       <div class="hud-stat">
         <span class="label">Rank:</span>
         <span class="val mint" id="hud-renown">Tithe Lord (0)</span>
       </div>
     </div>
-    <div class="hud-row" style="margin-top: 2px;">
-      <div class="hud-stat"><span class="label">Treasury:</span> <span class="val gold" id="hud-gold">180g</span></div>
-      <div class="hud-stat"><span class="label">Granary:</span> <span class="val cyan" id="hud-grain">340b</span></div>
-      <div class="hud-stat"><span class="label">Stone:</span> <span class="val silver" id="hud-stone">85</span></div>
-      <div class="hud-stat"><span class="label">Timber:</span> <span class="val silver" id="hud-timber">130</span></div>
+    <div class="hud-row">
+      <div class="hud-stat"><span class="label">Gold:</span> <span class="val gold" id="hud-gold">250g</span></div>
+      <div class="hud-stat"><span class="label">Grain:</span> <span class="val cyan" id="hud-grain">380b</span></div>
+      <div class="hud-stat"><span class="label">Stone:</span> <span class="val silver" id="hud-stone">100</span></div>
+      <div class="hud-stat"><span class="label">Timber:</span> <span class="val silver" id="hud-timber">150</span></div>
       <div class="hud-stat"><span class="label">Serfs:</span> <span class="val mint" id="hud-serfs">14</span></div>
     </div>
   </header>
@@ -432,70 +440,73 @@
   <!-- MAIN SCROLLABLE VIEWPORT -->
   <main id="viewport">
 
-    <!-- PANEL 1: KEEP MAP (LOCAL CASTLE GRID) -->
+    <!-- PANEL 1: KEEP MAP -->
     <section id="panel-keep" class="view-panel active">
       <div class="card">
         <div class="card-header">
-          <span>The Keep Grid (16×16 Tactical Bailey)</span>
+          <span>Architect's Keep (16×16 Blueprint)</span>
           <span id="active-z-label" class="badge badge-cyan">Level 0: The Bailey</span>
         </div>
         
-        <div class="map-surface-wrapper">
+        <div class="blueprint-wrapper">
           <!-- ELEVATION SLICER -->
-          <div class="elevation-bar">
-            <button class="elev-btn" onclick="App.setZLevel(2)">
-              <span>Level +2</span>
-              <span class="elev-tag">Spires</span>
+          <div class="elevation-slicer">
+            <button class="elev-slice" onclick="App.setZLevel(2)">
+              <span>Z: +2</span>
+              <span class="tag">Spires</span>
             </button>
-            <button class="elev-btn" onclick="App.setZLevel(1)">
-              <span>Level +1</span>
-              <span class="elev-tag">Parapets</span>
+            <button class="elev-slice" onclick="App.setZLevel(1)">
+              <span>Z: +1</span>
+              <span class="tag">Ramparts</span>
             </button>
-            <button class="elev-btn active" onclick="App.setZLevel(0)">
-              <span>Level 0</span>
-              <span class="elev-tag">Bailey</span>
+            <button class="elev-slice active" onclick="App.setZLevel(0)">
+              <span>Z: 0</span>
+              <span class="tag">Bailey</span>
             </button>
-            <button class="elev-btn" onclick="App.setZLevel(-1)">
-              <span>Level -1</span>
-              <span class="elev-tag">Vaults</span>
+            <button class="elev-slice" onclick="App.setZLevel(-1)">
+              <span>Z: -1</span>
+              <span class="tag">Vaults</span>
             </button>
-            <button class="elev-btn" onclick="App.setZLevel(-2)">
-              <span>Level -2</span>
-              <span class="elev-tag">Undercroft</span>
+            <button class="elev-slice" onclick="App.setZLevel(-2)">
+              <span>Z: -2</span>
+              <span class="tag">Bedrock</span>
             </button>
           </div>
 
-          <!-- CANVAS VIEWPORT -->
-          <div class="map-canvas-container">
-            <canvas id="keepCanvas" width="380" height="380"></canvas>
+          <!-- CANVAS (384x384 = 16x16 with 24px cells) -->
+          <div class="canvas-viewport-box">
+            <canvas id="keepCanvas" width="384" height="384"></canvas>
           </div>
 
-          <!-- ACTION BRUSH TOOLBAR -->
-          <div class="brush-toolbar">
-            <button class="brush-btn active" onclick="CastleBuilder.setBrush('inspect')" id="brush-inspect">
-              <span class="brush-icon">🔍</span>
-              <span>Inspect</span>
+          <!-- BLUEPRINT TOOLBAR -->
+          <div class="brush-strip">
+            <button class="tool-btn active" onclick="CastleBuilder.setBrush('inspect')" id="tb-inspect">
+              <span class="icon">🔍</span><span>Inspect</span>
             </button>
-            <button class="brush-btn" onclick="CastleBuilder.setBrush('curtain_wall')" id="brush-wall">
-              <span class="brush-icon">🧱</span>
-              <span>Wall (15S)</span>
+            <button class="tool-btn" onclick="CastleBuilder.setBrush('wall')" id="tb-wall">
+              <span class="icon">🧱</span><span>Wall (15S)</span>
             </button>
-            <button class="brush-btn" onclick="CastleBuilder.setBrush('farm_wheat')" id="brush-farm">
-              <span class="brush-icon">🌾</span>
-              <span>Wheat</span>
+            <button class="tool-btn" onclick="CastleBuilder.setBrush('wheat')" id="tb-wheat">
+              <span class="icon">🌾</span><span>Wheat</span>
             </button>
-            <button class="brush-btn" onclick="CastleBuilder.setBrush('farm_peas')" id="brush-peas">
-              <span class="brush-icon">🌱</span>
-              <span>Peas</span>
+            <button class="tool-btn" onclick="CastleBuilder.setBrush('peas')" id="tb-peas">
+              <span class="icon">🌱</span><span>Peas</span>
             </button>
-            <button class="brush-btn" onclick="CastleBuilder.setBrush('hovel')" id="brush-hovel">
-              <span class="brush-icon">🛖</span>
-              <span>Hovel (15T)</span>
+            <button class="tool-btn" onclick="CastleBuilder.setBrush('hovel')" id="tb-hovel">
+              <span class="icon">🛖</span><span>Hovel (15T)</span>
             </button>
-            <button class="brush-btn" onclick="CastleBuilder.setBrush('demolish')" id="brush-demolish">
-              <span class="brush-icon">❌</span>
-              <span>Raze</span>
+            <button class="tool-btn" onclick="CastleBuilder.setBrush('demolish')" id="tb-demolish">
+              <span class="icon">❌</span><span>Raze</span>
             </button>
+          </div>
+
+          <!-- GHOST BLUEPRINT TOGGLE -->
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; font-size: 10px; color: var(--text-muted); border-top: 1px solid var(--blueprint-grid); padding-top: 4px;">
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox" id="chk-ghost" checked onchange="KeepRenderer.render()">
+              <span>Show Foundation Blueprint Underlay</span>
+            </label>
+            <span id="canvas-cursor-pos">X: --, Y: --</span>
           </div>
         </div>
 
@@ -505,30 +516,28 @@
         </div>
       </div>
 
-      <!-- ADVANCE TURN BUTTON -->
-      <button class="btn btn-cyan" onclick="App.advanceTurn()" style="font-size: 13px; font-weight: 700;">
+      <button class="btn btn-cyan" onclick="App.advanceTurn()" style="font-size: 12px; font-weight: 700;">
         Advance Reign (+1 Week)
       </button>
 
-      <!-- CHRONICLE -->
       <div class="card">
         <div class="card-header">Sovereign Chronicle &amp; Ledger</div>
         <div id="sovereign-log-stream">
-          <div class="log-entry royal">• The foundation stones of the sovereign keep are blessed by Crown decree.</div>
+          <div class="log-entry royal">• Architectural foundation blueprints ratified by royal decree.</div>
         </div>
       </div>
     </section>
 
-    <!-- PANEL 2: REALM MAP (OVERLAND EXPANSION) -->
+    <!-- PANEL 2: REALM MAP -->
     <section id="panel-realm" class="view-panel">
       <div class="card">
         <div class="card-header">
-          <span>The Sovereign Realm (8×8 Regional Matrix)</span>
+          <span>The Sovereign Realm (8×8 Grid)</span>
           <span class="badge badge-mint" id="realm-holdings-count">Holdings: 1/64</span>
         </div>
-        <div class="map-surface-wrapper">
-          <div class="map-canvas-container">
-            <canvas id="realmCanvas" width="380" height="380"></canvas>
+        <div class="blueprint-wrapper">
+          <div class="canvas-viewport-box">
+            <canvas id="realmCanvas" width="384" height="384"></canvas>
           </div>
         </div>
         <div id="realm-inspector" style="font-size: 11px; line-height: 1.4; color: var(--text-muted);">
@@ -545,7 +554,7 @@
       </div>
     </section>
 
-    <!-- PANEL 4: CORVÉE & SERF ROSTER -->
+    <!-- PANEL 4: SERFS -->
     <section id="panel-serfs" class="view-panel">
       <div class="card">
         <div class="card-header">Labor Hierarchy &amp; Crown Tithes</div>
@@ -553,15 +562,15 @@
       </div>
     </section>
 
-    <!-- PANEL 5: CROWN VENTURES & ENTERPRISES -->
+    <!-- PANEL 5: GUILDS -->
     <section id="panel-ventures" class="view-panel">
       <div class="card">
-        <div class="card-header">Guildhalls &amp; Commercial Charters</div>
+        <div class="card-header">Guildhalls &amp; Caravan Market</div>
         <div id="ventures-content"></div>
       </div>
     </section>
 
-    <!-- PANEL 6: CASTELLAN'S CODEX -->
+    <!-- PANEL 6: CODEX -->
     <section id="panel-codex" class="view-panel">
       <div class="card">
         <div class="card-header">Castellan's Field Codex</div>
@@ -572,7 +581,7 @@
     <!-- PANEL 7: GOD CONSOLE -->
     <section id="panel-god" class="view-panel">
       <div class="card" style="border-color: var(--cyan);">
-        <div class="card-header" style="color: var(--cyan);">The Divine Royal Console</div>
+        <div class="card-header" style="color: var(--cyan);">⚡ Divine Sovereign Console (God Mode)</div>
         <div id="god-content"></div>
       </div>
     </section>
@@ -613,7 +622,7 @@
 
 <script>
 /**
- * THRONE AND PLOW: OVERHAULED INTEGRATED ENGINE
+ * THRONE AND PLOW: ARCHITECTURAL BLUEPRINT ENGINE
  */
 const App = {
   currentZ: 0,
@@ -652,9 +661,9 @@ const App = {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(110, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.12);
-        gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+        osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(35, this.ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.07, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
@@ -663,34 +672,33 @@ const App = {
       } catch(e) {}
     },
     hammer() {
-      this.playTone(1200, 'triangle', 0.06, 0.04);
-      setTimeout(() => this.playTone(1800, 'sine', 0.04, 0.02), 20);
+      this.playTone(1100, 'triangle', 0.05, 0.04);
+      setTimeout(() => this.playTone(1700, 'sine', 0.04, 0.02), 25);
     },
     harvest() {
       try {
         this.init();
         if (this.ctx.state === 'suspended') this.ctx.resume();
-        const bufferSize = this.ctx.sampleRate * 0.08;
-        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-        const output = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) output[i] = (Math.random() * 2 - 1) * 0.03;
-        const whiteNoise = this.ctx.createBufferSource();
-        whiteNoise.buffer = buffer;
-        const filter = this.ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.value = 850;
-        whiteNoise.connect(filter);
-        filter.connect(this.ctx.destination);
-        whiteNoise.start();
+        const b = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.07, this.ctx.sampleRate);
+        const d = b.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.025;
+        const s = this.ctx.createBufferSource();
+        s.buffer = b;
+        const f = this.ctx.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.value = 800;
+        s.connect(f);
+        f.connect(this.ctx.destination);
+        s.start();
       } catch(e) {}
     },
     gold() {
       this.playTone(987.77, 'sine', 0.08, 0.04);
-      setTimeout(() => this.playTone(1318.51, 'sine', 0.12, 0.05), 50);
+      setTimeout(() => this.playTone(1318.51, 'sine', 0.12, 0.05), 45);
     },
     fanfare() {
       [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-        setTimeout(() => this.playTone(freq, 'triangle', 0.2, 0.06), idx * 100);
+        setTimeout(() => this.playTone(freq, 'triangle', 0.2, 0.06), idx * 90);
       });
     }
   },
@@ -701,16 +709,16 @@ const App = {
     document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.dock-tab').forEach(b => b.classList.remove('active'));
     
-    const targetPanel = document.getElementById(`panel-${tabId}`);
-    if (targetPanel) targetPanel.classList.add('active');
+    const target = document.getElementById(`panel-${tabId}`);
+    if (target) target.classList.add('active');
     
     const tabs = ['keep', 'realm', 'demesne', 'serfs', 'ventures', 'codex', 'god'];
-    const tabIdx = tabs.indexOf(tabId);
-    if (tabIdx >= 0) {
-      document.querySelectorAll('.dock-tab')[tabIdx].classList.add('active');
-    }
+    const idx = tabs.indexOf(tabId);
+    if (idx >= 0) document.querySelectorAll('.dock-tab')[idx].classList.add('active');
 
-    if (tabId === 'demesne') DemesneView.render();
+    if (tabId === 'keep') KeepRenderer.render();
+    else if (tabId === 'realm') RealmRenderer.render();
+    else if (tabId === 'demesne') DemesneView.render();
     else if (tabId === 'serfs') SerfView.render();
     else if (tabId === 'ventures') VentureEngine.renderUI();
     else if (tabId === 'codex') CodexView.render();
@@ -720,25 +728,25 @@ const App = {
   setZLevel(z) {
     this.Audio.stone();
     this.currentZ = z;
-    const labels = {
-      '-2': 'Level -2: Deep Undercroft',
-      '-1': 'Level -1: Storage Vaults',
+    const names = {
+      '-2': 'Level -2: Bedrock Undercroft',
+      '-1': 'Level -1: Subterranean Vaults',
       '0': 'Level 0: The Bailey & Demesne',
       '1': 'Level +1: Wallwalk & Parapets',
       '2': 'Level +2: High Spires & Towers'
     };
     const lbl = document.getElementById('active-z-label');
-    if (lbl) lbl.innerText = labels[z] || `Level ${z}`;
+    if (lbl) lbl.innerText = names[z] || `Level ${z}`;
 
-    const elevBtns = document.querySelectorAll('.elevation-bar .elev-btn');
+    const slices = document.querySelectorAll('.elevation-slicer .elev-slice');
     const order = [2, 1, 0, -1, -2];
-    elevBtns.forEach((btn, idx) => {
-      btn.classList.toggle('active', order[idx] === z);
+    slices.forEach((btn, i) => {
+      btn.classList.toggle('active', order[i] === z);
     });
 
-    if (window.KeepRenderer) window.KeepRenderer.render();
-    if (window.CrownState && window.CrownState.selectedKeepTile) {
-      CastleBuilder.updateInspectorUI(window.CrownState.selectedKeepTile);
+    KeepRenderer.render();
+    if (CrownState.selectedKeepTile) {
+      CastleBuilder.updateInspectorUI(CrownState.selectedKeepTile);
     }
   },
 
@@ -758,7 +766,7 @@ const App = {
   }
 };
 
-// --- MASTER GAME STATE ---
+// --- MASTER STATE ---
 window.CrownState = {
   meta: {
     year: 1,
@@ -767,22 +775,21 @@ window.CrownState = {
     totalWeeks: 1
   },
   treasury: {
-    gold: 180,
-    grain: 340,
-    dressedStone: 85,
-    timber: 130,
-    ironBloom: 20,
-    wool: 15,
-    honey: 10,
-    ale: 25,
+    gold: 250,
+    grain: 380,
+    dressedStone: 100,
+    timber: 150,
+    ironBloom: 25,
+    wool: 20,
+    honey: 15,
+    ale: 30,
     get stone() { return this.dressedStone; },
     set stone(v) { this.dressedStone = v; }
   },
   crown: {
     renownPoints: 0,
     prestigeTier: "Tithe Lord",
-    contentment: 88,
-    sovereignFavor: 50
+    contentment: 90
   },
   taxation: {
     grainTithePct: 12,
@@ -795,43 +802,42 @@ window.CrownState = {
 
 // --- ARCHITECTURAL CATALOG ---
 window.TILE_CATALOG = {
-  // Level -2
-  vault_floor: { id: "vault_floor", z: -2, name: "Flagstone Cellar", glyph: "⌗", color: "#1e293b", cost: { stone: 5, gold: 2 } },
-  wine_vault: { id: "wine_vault", z: -2, name: "Ale & Wine Casks", glyph: "🛢", color: "#6366f1", cost: { stone: 20, timber: 20, gold: 25 } },
-  cistern: { id: "cistern", z: -2, name: "Deep Rock Cistern", glyph: "💧", color: "#0ea5e9", cost: { stone: 35, gold: 40 } },
-  treasury_vault: { id: "treasury_vault", z: -2, name: "Crown Strongroom", glyph: "🗝", color: "#eab308", cost: { stone: 50, ironBloom: 15, gold: 80 } },
+  // -2 Bedrock
+  vault_floor: { id: "vault_floor", z: -2, name: "Flagstone Cellar Floor", glyph: "⌗", cost: { stone: 5, gold: 2 } },
+  wine_vault: { id: "wine_vault", z: -2, name: "Ale & Wine Casks", glyph: "🛢", cost: { stone: 20, timber: 20, gold: 25 } },
+  cistern: { id: "cistern", z: -2, name: "Deep Rock Cistern", glyph: "💧", cost: { stone: 35, gold: 40 } },
+  treasury_vault: { id: "treasury_vault", z: -2, name: "Crown Strongroom", glyph: "🗝", cost: { stone: 50, ironBloom: 15, gold: 80 } },
 
-  // Level -1
-  cellar_dirt: { id: "cellar_dirt", z: -1, name: "Rough Earth Cellar", glyph: "░", color: "#161b26" },
-  stone_granary_base: { id: "stone_granary_base", z: -1, name: "Dry Masonry Vault", glyph: "🏛", color: "#38bdf8", cost: { stone: 30, timber: 20, gold: 20 } },
-  larder_pit: { id: "larder_pit", z: -1, name: "Root & Meat Larder", glyph: "🥩", color: "#10b981", cost: { stone: 15, timber: 15 } },
+  // -1 Vaults
+  cellar_dirt: { id: "cellar_dirt", z: -1, name: "Rough Earth Excavation", glyph: "░" },
+  stone_granary_base: { id: "stone_granary_base", z: -1, name: "Granary Silo Vault", glyph: "🏛", cost: { stone: 30, timber: 20, gold: 20 } },
+  larder_pit: { id: "larder_pit", z: -1, name: "Root & Meat Larder", glyph: "🥩", cost: { stone: 15, timber: 15 } },
 
-  // Level 0
-  loam: { id: "loam", z: 0, name: "Virgin Loam Soil", glyph: "·", color: "#182230" },
-  tilled_field: { id: "tilled_field", z: 0, name: "Plowed Furrow Strip", glyph: "≡", color: "#2d241c" },
-  curtain_wall: { id: "curtain_wall", z: 0, name: "Ashlar Curtain Wall", glyph: "🧱", color: "#475569", cost: { stone: 15 } },
-  royal_keep: { id: "royal_keep", z: 0, name: "Great Hall & Keep", glyph: "🏰", color: "#38bdf8", cost: { stone: 100, timber: 60, gold: 120 } },
-  hovel: { id: "hovel", z: 0, name: "Thatched Cottar Hovel", glyph: "🛖", color: "#44392d", cost: { timber: 15, gold: 5 } },
-  pasture: { id: "pasture", z: 0, name: "Fallow Clover Pasture", glyph: "☘", color: "#064e3b" },
+  // 0 Bailey
+  loam: { id: "loam", z: 0, name: "Virgin Loam Soil", glyph: "·" },
+  tilled_field: { id: "tilled_field", z: 0, name: "Plowed Furrow Strip", glyph: "≡" },
+  curtain_wall: { id: "curtain_wall", z: 0, name: "Ashlar Curtain Wall", glyph: "🧱", cost: { stone: 15 } },
+  royal_keep: { id: "royal_keep", z: 0, name: "Great Hall & Keep", glyph: "🏰", cost: { stone: 100, timber: 60, gold: 120 } },
+  hovel: { id: "hovel", z: 0, name: "Cottar Thatched Hovel", glyph: "🛖", cost: { timber: 15, gold: 5 } },
+  pasture: { id: "pasture", z: 0, name: "Fallow Clover Pasture", glyph: "☘" },
 
-  // Level +1
+  // +1 Ramparts
   open_air_1: { id: "open_air_1", z: 1, name: "Open Sky", glyph: " " },
-  rampart_walk: { id: "rampart_walk", z: 1, name: "Crenelated Ramparts", glyph: "═", color: "#64748b", requiresBelow: "curtain_wall", cost: { stone: 10, timber: 10 } },
-  solar_chamber: { id: "solar_chamber", z: 1, name: "Lord's Solar Hall", glyph: "👑", color: "#0284c7", requiresBelow: "royal_keep", cost: { stone: 25, timber: 30, gold: 40 } },
-  guard_turret: { id: "guard_turret", z: 1, name: "Archer Turret", glyph: "☗", color: "#94a3b8", requiresBelow: "curtain_wall", cost: { stone: 20 } },
+  rampart_walk: { id: "rampart_walk", z: 1, name: "Crenelated Wallwalk", glyph: "═", requiresBelow: "curtain_wall", cost: { stone: 10, timber: 10 } },
+  solar_chamber: { id: "solar_chamber", z: 1, name: "Lord's Solar Hall", glyph: "👑", requiresBelow: "royal_keep", cost: { stone: 25, timber: 30, gold: 40 } },
+  guard_turret: { id: "guard_turret", z: 1, name: "Archer Turret", glyph: "☗", requiresBelow: "curtain_wall", cost: { stone: 20 } },
 
-  // Level +2
+  // +2 Spires
   open_air_2: { id: "open_air_2", z: 2, name: "Stratum Air", glyph: " " },
-  high_spire: { id: "high_spire", z: 2, name: "High Ashlar Spire", glyph: "▲", color: "#38bdf8", requiresBelow: "guard_turret", cost: { stone: 40, gold: 60 } },
-  astronomy_turret: { id: "astronomy_turret", z: 2, name: "Celestial Star Chamber", glyph: "✦", color: "#6ee7b7", requiresBelow: "solar_chamber", cost: { stone: 35, gold: 100 } }
+  high_spire: { id: "high_spire", z: 2, name: "High Ashlar Spire", glyph: "▲", requiresBelow: "guard_turret", cost: { stone: 40, gold: 60 } },
+  astronomy_turret: { id: "astronomy_turret", z: 2, name: "Star Chamber", glyph: "✦", requiresBelow: "solar_chamber", cost: { stone: 35, gold: 100 } }
 };
 
-// --- CROPS CATALOG ---
 window.CROP_CATALOG = {
-  wheat: { id: "wheat", name: "Winter Wheat", harvestSeason: 1, baseYield: 18, desc: "Dense bread grain. Drains nitrogen." },
-  barley: { id: "barley", name: "Spring Barley", harvestSeason: 2, baseYield: 16, desc: "Malting grain for ale brewing." },
-  peas: { id: "peas", name: "Field Peas (Legumes)", harvestSeason: 2, baseYield: 12, desc: "Nitrogen-fixing pulses. Heals soil." },
-  pasture: { id: "pasture", name: "Clover Pasture", harvestSeason: -1, baseYield: 0, desc: "Restores organic fertility." }
+  wheat: { id: "wheat", name: "Winter Wheat", harvestSeason: 1, baseYield: 18 },
+  barley: { id: "barley", name: "Spring Barley", harvestSeason: 2, baseYield: 16 },
+  peas: { id: "peas", name: "Field Peas (Legumes)", harvestSeason: 2, baseYield: 12 },
+  pasture: { id: "pasture", name: "Clover Pasture", harvestSeason: -1, baseYield: 0 }
 };
 
 // --- SERF ROSTER ---
@@ -841,7 +847,7 @@ window.SerfRoster = [
   { id: "s3", name: "Beda Woodhewer", caste: "cottar", task: "timber", health: 92, nourishment: 84, contentment: 80, draftOx: false, x: 6, y: 5, z: 0 },
   { id: "s4", name: "Giles the Sower", caste: "villein", task: "plant", health: 90, nourishment: 88, contentment: 84, draftOx: true, x: 3, y: 3, z: 0 },
   { id: "s5", name: "Algar Ditcher", caste: "cottar", task: "build", health: 85, nourishment: 79, contentment: 75, draftOx: false, x: 5, y: 6, z: 0 },
-  { id: "s6", name: "Dunstan of the Furrow", caste: "villein", task: "harvest", health: 94, nourishment: 89, contentment: 86, draftOx: true, x: 2, y: 4, z: 0 },
+  { id: "s6", name: "Dunstan of Furrow", caste: "villein", task: "harvest", health: 94, nourishment: 89, contentment: 86, draftOx: true, x: 2, y: 4, z: 0 },
   { id: "s7", name: "Kenelm Mason", caste: "artisan", task: "build", health: 96, nourishment: 95, contentment: 90, draftOx: false, x: 6, y: 6, z: 0 },
   { id: "s8", name: "Eadwig Miller", caste: "artisan", task: "craft", health: 91, nourishment: 92, contentment: 88, draftOx: false, x: 3, y: 4, z: 0 },
   { id: "s9", name: "Aldhelm Carter", caste: "cottar", task: "quarry", health: 87, nourishment: 80, contentment: 77, draftOx: false, x: 4, y: 2, z: 0 },
@@ -852,7 +858,7 @@ window.SerfRoster = [
   { id: "s14", name: "Aethelred Maltster", caste: "artisan", task: "brew", health: 94, nourishment: 92, contentment: 91, draftOx: false, x: 7, y: 6, z: 0 }
 ];
 
-// --- 8x8 REALM PROVINCES GENERATOR ---
+// --- 8x8 REALM PROVINCES ---
 (function initRealm() {
   window.REALM_PROVINCES = {};
   const biomes = [
@@ -871,29 +877,29 @@ window.SerfRoster = [
 
   for (let ry = 0; ry < 8; ry++) {
     for (let rx = 0; rx < 8; rx++) {
-      const biome = biomes[(rx * 3 + ry * 5) % biomes.length];
+      const b = biomes[(rx * 3 + ry * 5) % biomes.length];
       const pName = `${prefixes[(rx * 7 + ry) % prefixes.length]} ${suffixes[(ry * 11 + rx) % suffixes.length]}`;
-      const isStartCapital = (rx === 3 && ry === 3);
+      const isCap = (rx === 3 && ry === 3);
 
       window.REALM_PROVINCES[`${rx}_${ry}`] = {
         x: rx, y: ry,
         id: `prov_${rx}_${ry}`,
-        name: isStartCapital ? "The Sovereign Keep" : pName,
-        biome: biome.type,
-        biomeName: biome.name,
-        boon: biome.boon,
-        icon: isStartCapital ? "👑" : biome.icon,
-        color: biome.color,
-        status: isStartCapital ? "annexed" : (Math.abs(rx - 3) <= 1 && Math.abs(ry - 3) <= 1 ? "surveyed" : "uncharted"),
-        charterCostGold: isStartCapital ? 0 : 80 + (Math.abs(rx - 3) + Math.abs(ry - 3)) * 35,
-        charterCostRenown: isStartCapital ? 0 : 20 + (Math.abs(rx - 3) + Math.abs(ry - 3)) * 12,
-        yields: { timber: biome.timber, stone: biome.stone, grain: biome.grain, gold: biome.gold }
+        name: isCap ? "The Sovereign Keep" : pName,
+        biome: b.type,
+        biomeName: b.name,
+        boon: b.boon,
+        icon: isCap ? "👑" : b.icon,
+        color: b.color,
+        status: isCap ? "annexed" : (Math.abs(rx - 3) <= 1 && Math.abs(ry - 3) <= 1 ? "surveyed" : "uncharted"),
+        charterCostGold: isCap ? 0 : 70 + (Math.abs(rx - 3) + Math.abs(ry - 3)) * 30,
+        charterCostRenown: isCap ? 0 : 20 + (Math.abs(rx - 3) + Math.abs(ry - 3)) * 10,
+        yields: { timber: b.timber, stone: b.stone, grain: b.grain, gold: b.gold }
       };
     }
   }
 })();
 
-// --- 16x16 KEEP MATRIX GENERATOR ---
+// --- 16x16 KEEP INITIALIZER ---
 (function initKeep() {
   window.KEEP_GRID = {};
   for (let z = -2; z <= 2; z++) {
@@ -902,7 +908,7 @@ window.SerfRoster = [
         let baseType = (z === 0) ? "loam" : ((z < 0) ? "cellar_dirt" : "open_air_" + z);
         
         if (z === 0) {
-          // Center Keep Courtyard
+          // Inner castle courtyard
           if (x >= 6 && x <= 9 && y >= 6 && y <= 9) {
             baseType = (x === 7 && y === 7) ? "royal_keep" : "curtain_wall";
           } else if (x >= 1 && x <= 4 && y >= 2 && y <= 13) {
@@ -913,7 +919,7 @@ window.SerfRoster = [
             baseType = "stone_granary_base";
           }
         } else if (z === 1) {
-          if ((x === 6 || x === 9) && (y >= 6 && y <= 9) || (y === 6 || y === 9) && (x >= 6 && x <= 9)) {
+          if (((x === 6 || x === 9) && (y >= 6 && y <= 9)) || ((y === 6 || y === 9) && (x >= 6 && x <= 9))) {
             baseType = "rampart_walk";
           } else if (x === 7 && y === 7) {
             baseType = "solar_chamber";
@@ -933,13 +939,12 @@ window.SerfRoster = [
   }
 })();
 
-// --- OVERHAULED PROCEDURAL TACTICAL KEEP RENDERER ---
+// --- GRAPH PAPER ARCHITECTURAL CANVAS RENDERER ---
 window.KeepRenderer = {
   canvas: null,
   ctx: null,
-  cols: 16,
-  rows: 16,
-  ts: 23.75, // 380 / 16
+  dim: 16,
+  cellSize: 24, // 16 * 24 = 384px exactly
 
   init() {
     this.canvas = document.getElementById("keepCanvas");
@@ -953,228 +958,266 @@ window.KeepRenderer = {
     if (!this.ctx) return;
     const ctx = this.ctx;
     const curZ = App.currentZ;
-    const ts = this.ts;
+    const cs = this.cellSize;
+    const totalW = 384;
 
-    ctx.clearRect(0, 0, 380, 380);
+    ctx.clearRect(0, 0, totalW, totalW);
 
-    // Dynamic background based on elevation
-    if (curZ >= 1) {
-      // Sky stratum gradient
-      const grad = ctx.createLinearGradient(0, 0, 0, 380);
-      grad.addColorStop(0, "#08101e");
-      grad.addColorStop(1, "#020408");
-      ctx.fillStyle = grad;
-    } else if (curZ < 0) {
-      // Deep subterranean rock gradient
-      ctx.fillStyle = "#030407";
-    } else {
-      // Ground Bailey earth
-      ctx.fillStyle = "#0c1119";
-    }
-    ctx.fillRect(0, 0, 380, 380);
+    // 1. Draw Architectural Graph Paper Base
+    this.drawGraphPaper(ctx, totalW, cs, curZ);
 
-    // 1. Ghost Foundation Pass (Show level 0 foundation when looking at +1 / +2)
-    if (curZ > 0) {
-      ctx.save();
-      ctx.globalAlpha = 0.2;
-      for (let y = 0; y < 16; y++) {
-        for (let x = 0; x < 16; x++) {
-          const t0 = window.KEEP_GRID[`${x}_${y}_0`];
-          if (t0 && t0.tileId === "curtain_wall") {
-            ctx.fillStyle = "#64748b";
-            ctx.fillRect(x * ts, y * ts, ts, ts);
-          } else if (t0 && t0.tileId === "royal_keep") {
-            ctx.fillStyle = "#38bdf8";
-            ctx.fillRect(x * ts, y * ts, ts, ts);
-          }
-        }
-      }
-      ctx.restore();
+    // 2. Foundation Underlay / Ghost Blueprint (if enabled & curZ > 0)
+    const showGhost = document.getElementById("chk-ghost") ? document.getElementById("chk-ghost").checked : true;
+    if (showGhost && curZ > 0) {
+      this.drawGhostUnderlay(ctx, cs, curZ);
     }
 
-    // 2. Active Layer Drawing Pass
+    // 3. Render Active Layer Tiles
     for (let y = 0; y < 16; y++) {
       for (let x = 0; x < 16; x++) {
         const tile = window.KEEP_GRID[`${x}_${y}_${curZ}`];
         if (!tile) continue;
-        const px = x * ts;
-        const py = y * ts;
-
-        this.drawTile(ctx, tile, px, py, ts, curZ);
+        const px = x * cs;
+        const py = y * cs;
+        this.drawCell(ctx, tile, px, py, cs, curZ);
       }
     }
 
-    // 3. Crisp Tactical Grid Overlay
-    ctx.save();
-    ctx.lineWidth = 0.5;
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.07)";
-    for (let i = 0; i <= 16; i++) {
-      const pos = Math.round(i * ts);
-      ctx.beginPath();
-      ctx.moveTo(pos, 0); ctx.lineTo(pos, 380);
-      ctx.moveTo(0, pos); ctx.lineTo(380, pos);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // 4. Draw Serf Tokens
+    // 4. Render Serf Tokens on Active Layer
     window.SerfRoster.forEach(serf => {
-      if (serf.z !== curZ) return;
-      this.drawSerf(ctx, serf, serf.x * ts, serf.y * ts, ts);
+      if (serf.z === curZ) {
+        this.drawSerfMeeple(ctx, serf, serf.x * cs, serf.y * cs, cs);
+      }
     });
 
-    // 5. Selection Highlight
+    // 5. Render Active Selection Cursor
     if (CrownState.selectedKeepTile && CrownState.selectedKeepTile.z === curZ) {
-      this.drawSelection(ctx, CrownState.selectedKeepTile.x * ts, CrownState.selectedKeepTile.y * ts, ts);
+      this.drawBlueprintCursor(ctx, CrownState.selectedKeepTile.x * cs, CrownState.selectedKeepTile.y * cs, cs);
     }
   },
 
-  drawTile(ctx, tile, px, py, ts, curZ) {
+  drawGraphPaper(ctx, size, cs, z) {
+    // Blueprint background hue per level
+    let bgCol = "#080e18";
+    if (z > 0) bgCol = "#091322"; // Sky-tinged blueprint
+    if (z < 0) bgCol = "#07090f"; // Subterranean obsidian
+    ctx.fillStyle = bgCol;
+    ctx.fillRect(0, 0, size, size);
+
+    // 1px Minor Graph Paper Grid
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#101e33";
+    for (let i = 0; i <= size; i += cs) {
+      ctx.beginPath();
+      ctx.moveTo(i + 0.5, 0); ctx.lineTo(i + 0.5, size);
+      ctx.moveTo(0, i + 0.5); ctx.lineTo(size, i + 0.5);
+      ctx.stroke();
+    }
+
+    // Major 4x4 Engineering Grid Lines
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#1c3558";
+    for (let i = 0; i <= size; i += cs * 4) {
+      ctx.beginPath();
+      ctx.moveTo(i + 0.5, 0); ctx.lineTo(i + 0.5, size);
+      ctx.moveTo(0, i + 0.5); ctx.lineTo(size, i + 0.5);
+      ctx.stroke();
+    }
+  },
+
+  drawGhostUnderlay(ctx, cs, curZ) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.28)";
+    ctx.fillStyle = "rgba(56, 189, 248, 0.08)";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
+
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) {
+        const lower = window.KEEP_GRID[`${x}_${y}_0`];
+        if (lower && (lower.tileId === "curtain_wall" || lower.tileId === "royal_keep")) {
+          const px = x * cs;
+          const py = y * cs;
+          ctx.fillRect(px + 2, py + 2, cs - 4, cs - 4);
+          ctx.strokeRect(px + 2, py + 2, cs - 4, cs - 4);
+        }
+      }
+    }
+    ctx.restore();
+  },
+
+  drawCell(ctx, tile, px, py, cs, z) {
     const id = tile.tileId;
 
     if (id.startsWith("open_air")) {
-      // Empty sky tile
+      // Draw faint crosshair in open sky
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.12)";
+      ctx.beginPath();
+      ctx.moveTo(px + cs / 2, py + 4); ctx.lineTo(px + cs / 2, py + cs - 4);
+      ctx.moveTo(px + 4, py + cs / 2); ctx.lineTo(px + cs - 4, py + cs / 2);
+      ctx.stroke();
       return;
     }
 
     if (id === "loam") {
-      ctx.fillStyle = "#121822";
-      ctx.fillRect(px, py, ts, ts);
-      // Grass speckles
-      ctx.fillStyle = "#1e293b";
+      ctx.fillStyle = "#121b27";
+      ctx.fillRect(px + 1, py + 1, cs - 2, cs - 2);
+      // Clean graph loam pattern
+      ctx.fillStyle = "#1d2c3e";
       ctx.fillRect(px + 4, py + 5, 2, 2);
-      ctx.fillRect(px + 14, py + 12, 2, 2);
+      ctx.fillRect(px + 14, py + 15, 2, 2);
     } else if (id === "pasture") {
-      ctx.fillStyle = "#0d281e";
-      ctx.fillRect(px, py, ts, ts);
-      // Clover bloom dots
+      ctx.fillStyle = "#0a291e";
+      ctx.fillRect(px + 1, py + 1, cs - 2, cs - 2);
+      // Clover badges & grazing sheep
       ctx.fillStyle = "#34d399";
       ctx.fillRect(px + 5, py + 6, 2, 2);
-      ctx.fillRect(px + 13, py + 14, 2, 2);
+      ctx.fillRect(px + 15, py + 13, 2, 2);
+      // Little white sheep
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillRect(px + 10, py + 10, 4, 3);
     } else if (id === "tilled_field") {
-      ctx.fillStyle = "#221a14";
-      ctx.fillRect(px, py, ts, ts);
-      // Plow furrows
-      ctx.strokeStyle = "#382c22";
+      ctx.fillStyle = "#261c14";
+      ctx.fillRect(px + 1, py + 1, cs - 2, cs - 2);
+      // High-contrast clean furrows
+      ctx.strokeStyle = "#3d2d20";
       ctx.lineWidth = 1;
-      for (let f = 3; f < ts; f += 6) {
+      for (let f = 4; f < cs; f += 5) {
         ctx.beginPath();
-        ctx.moveTo(px, py + f); ctx.lineTo(px + ts, py + f);
+        ctx.moveTo(px + 2, py + f); ctx.lineTo(px + cs - 2, py + f);
         ctx.stroke();
       }
 
-      // Draw growing crops
+      // Crop rendering
       if (tile.crop) {
         const stage = tile.growthStage || 1;
         if (tile.crop === "wheat" || tile.crop === "barley") {
-          ctx.fillStyle = (stage >= 4) ? "#f59e0b" : ((stage >= 2) ? "#ca8a04" : "#10b981");
+          const col = (stage >= 4) ? "#fbbf24" : ((stage >= 2) ? "#ca8a04" : "#10b981");
+          ctx.fillStyle = col;
           for (let i = 0; i < stage * 2; i++) {
-            const rx = px + 4 + (i * 3.5) % (ts - 6);
-            const ry = py + 4 + (i * 5) % (ts - 8);
-            ctx.fillRect(rx, ry, 2, 3 + stage);
+            const rx = px + 4 + (i * 3) % (cs - 7);
+            const ry = py + 3 + (i * 5) % (cs - 7);
+            ctx.fillRect(rx, ry, 2, 4 + stage);
+          }
+          if (stage >= 4) {
+            // Sickle ready glow
+            ctx.strokeStyle = "#fbbf24";
+            ctx.strokeRect(px + 2, py + 2, cs - 4, cs - 4);
           }
         } else if (tile.crop === "peas") {
           ctx.fillStyle = "#34d399";
           ctx.beginPath();
-          ctx.arc(px + ts / 2, py + ts / 2, Math.min(ts / 2 - 2, 2 + stage * 1.5), 0, Math.PI * 2);
+          ctx.arc(px + cs / 2, py + cs / 2, Math.min(cs / 2 - 3, 2 + stage * 1.6), 0, Math.PI * 2);
           ctx.fill();
         }
       }
     } else if (id === "curtain_wall") {
-      // Ashlar Wall Block
+      // 3D Ashlar Crenelated Stone Block
       ctx.fillStyle = "#334155";
-      ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
+      ctx.fillRect(px + 1, py + 1, cs - 2, cs - 2);
       ctx.strokeStyle = "#64748b";
       ctx.lineWidth = 1;
-      ctx.strokeRect(px + 1, py + 1, ts - 2, ts - 2);
-      // Wall joints
-      ctx.strokeStyle = "#1e293b";
-      ctx.beginPath();
-      ctx.moveTo(px + 1, py + ts / 2); ctx.lineTo(px + ts - 1, py + ts / 2);
-      ctx.moveTo(px + ts / 2, py + 1); ctx.lineTo(px + ts / 2, py + ts / 2);
-      ctx.stroke();
+      ctx.strokeRect(px + 1, py + 1, cs - 2, cs - 2);
+
+      // Bevel & Crenel
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillRect(px + 2, py + 2, cs - 4, 2); // Top rim
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(px + 4, py + 1, 3, 2);
+      ctx.fillRect(px + cs - 7, py + 1, 3, 2);
     } else if (id === "royal_keep") {
-      // Great Keep
+      // Majestic Central Keep Tower
       ctx.fillStyle = "#1e293b";
-      ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
+      ctx.fillRect(px + 1, py + 1, cs - 2, cs - 2);
       ctx.strokeStyle = "#38bdf8";
       ctx.lineWidth = 1.5;
-      ctx.strokeRect(px + 1, py + 1, ts - 2, ts - 2);
+      ctx.strokeRect(px + 1, py + 1, cs - 2, cs - 2);
+
       ctx.fillStyle = "#38bdf8";
-      ctx.font = "bold 11px monospace";
+      ctx.font = "bold 12px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("☗", px + ts / 2, py + ts / 2);
+      ctx.fillText("☗", px + cs / 2, py + cs / 2);
     } else if (id === "rampart_walk") {
+      // Wallwalk Parapets
       ctx.fillStyle = "#475569";
-      ctx.fillRect(px + 2, py + 2, ts - 4, ts - 4);
-      // Crenellations
-      ctx.fillStyle = "#0f172a";
-      ctx.fillRect(px + 3, py + 2, 3, 2);
-      ctx.fillRect(px + ts - 6, py + 2, 3, 2);
+      ctx.fillRect(px + 2, py + 2, cs - 4, cs - 4);
+      ctx.strokeStyle = "#94a3b8";
+      ctx.strokeRect(px + 2, py + 2, cs - 4, cs - 4);
+
+      // Walkway planks
+      ctx.strokeStyle = "#1e293b";
+      ctx.beginPath();
+      ctx.moveTo(px + cs / 2, py + 2); ctx.lineTo(px + cs / 2, py + cs - 2);
+      ctx.stroke();
     } else if (id === "solar_chamber") {
       ctx.fillStyle = "#0369a1";
-      ctx.fillRect(px + 2, py + 2, ts - 4, ts - 4);
+      ctx.fillRect(px + 2, py + 2, cs - 4, cs - 4);
       ctx.strokeStyle = "#7dd3fc";
-      ctx.strokeRect(px + 2, py + 2, ts - 4, ts - 4);
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(px + 2, py + 2, cs - 4, cs - 4);
       ctx.fillStyle = "#ffffff";
       ctx.font = "10px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("👑", px + ts / 2, py + ts / 2);
+      ctx.fillText("👑", px + cs / 2, py + cs / 2);
     } else if (id === "guard_turret" || id === "high_spire") {
       ctx.fillStyle = (id === "high_spire") ? "#0284c7" : "#334155";
       ctx.beginPath();
-      ctx.arc(px + ts / 2, py + ts / 2, ts / 2 - 3, 0, Math.PI * 2);
+      ctx.arc(px + cs / 2, py + cs / 2, cs / 2 - 3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = (id === "high_spire") ? "#38bdf8" : "#94a3b8";
+      ctx.strokeStyle = (id === "high_spire") ? "#38bdf8" : "#cbd5e1";
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     } else if (id === "hovel") {
-      ctx.fillStyle = "#3f2e1d";
-      ctx.fillRect(px + 3, py + 3, ts - 6, ts - 6);
-      ctx.strokeStyle = "#78350f";
-      ctx.strokeRect(px + 3, py + 3, ts - 6, ts - 6);
+      // Cottar Thatched Hovel
+      ctx.fillStyle = "#452e1e";
+      ctx.fillRect(px + 3, py + 3, cs - 6, cs - 6);
+      ctx.strokeStyle = "#d97706";
+      ctx.strokeRect(px + 3, py + 3, cs - 6, cs - 6);
       ctx.fillStyle = "#d97706";
-      ctx.font = "8px monospace";
+      ctx.font = "9px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("🛖", px + ts / 2, py + ts / 2);
+      ctx.fillText("🛖", px + cs / 2, py + cs / 2);
     } else if (id === "stone_granary_base") {
       ctx.fillStyle = "#1e293b";
-      ctx.fillRect(px + 2, py + 2, ts - 4, ts - 4);
+      ctx.fillRect(px + 2, py + 2, cs - 4, cs - 4);
       ctx.strokeStyle = "#38bdf8";
-      ctx.strokeRect(px + 2, py + 2, ts - 4, ts - 4);
+      ctx.strokeRect(px + 2, py + 2, cs - 4, cs - 4);
       ctx.fillStyle = "#38bdf8";
       ctx.font = "bold 9px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("G", px + ts / 2, py + ts / 2);
+      ctx.fillText("G", px + cs / 2, py + cs / 2);
     } else if (id === "cellar_dirt") {
-      ctx.fillStyle = "#0f141c";
-      ctx.fillRect(px, py, ts, ts);
+      ctx.fillStyle = "#101622";
+      ctx.fillRect(px + 1, py + 1, cs - 2, cs - 2);
+      ctx.strokeStyle = "#1e2838";
+      ctx.strokeRect(px + 1, py + 1, cs - 2, cs - 2);
     } else if (id === "vault_floor") {
-      ctx.fillStyle = "#1c2333";
-      ctx.fillRect(px + 1, py + 1, ts - 2, ts - 2);
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
-      ctx.strokeRect(px + 2, py + 2, ts - 4, ts - 4);
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(px + 1, py + 1, cs - 2, cs - 2);
+      ctx.strokeStyle = "#334155";
+      ctx.strokeRect(px + 2, py + 2, cs - 4, cs - 4);
     } else {
-      ctx.fillStyle = "#151b26";
-      ctx.fillRect(px, py, ts, ts);
+      ctx.fillStyle = "#151e2b";
+      ctx.fillRect(px + 1, py + 1, cs - 2, cs - 2);
     }
   },
 
-  drawSerf(ctx, serf, px, py, ts) {
-    const cx = px + ts / 2;
-    const cy = py + ts / 2;
-    const r = ts * 0.38;
+  drawSerfMeeple(ctx, serf, px, py, cs) {
+    const cx = px + cs / 2;
+    const cy = py + cs / 2;
+    const r = cs * 0.36;
 
     // Drop shadow
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
     ctx.beginPath();
     ctx.arc(cx + 1, cy + 1, r, 0, Math.PI * 2);
     ctx.fill();
 
-    // Caste disk fill
+    // Meeple ring
     ctx.fillStyle = (serf.caste === "villein") ? "#0369a1" : ((serf.caste === "artisan") ? "#059669" : "#334155");
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -1184,64 +1227,77 @@ window.KeepRenderer = {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Icon or initial
+    // Serf Caste Initial
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 8px sans-serif";
+    ctx.font = "bold 8px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(serf.name[0], cx, cy);
   },
 
-  drawSelection(ctx, px, py, ts) {
+  drawBlueprintCursor(ctx, px, py, cs) {
     ctx.save();
     ctx.strokeStyle = "#38bdf8";
     ctx.lineWidth = 2;
-    ctx.strokeRect(px + 1, py + 1, ts - 2, ts - 2);
+    ctx.strokeRect(px + 1, py + 1, cs - 2, cs - 2);
 
     const b = 5;
     ctx.strokeStyle = "#7dd3fc";
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.moveTo(px, py + b); ctx.lineTo(px, py); ctx.lineTo(px + b, py);
-    ctx.moveTo(px + ts - b, py); ctx.lineTo(px + ts, py); ctx.lineTo(px + ts, py + b);
-    ctx.moveTo(px, py + ts - b); ctx.lineTo(px, py + ts); ctx.lineTo(px + b, py + ts);
-    ctx.moveTo(px + ts - b, py + ts); ctx.lineTo(px + ts, py + ts); ctx.lineTo(px + ts, py + ts - b);
+    ctx.moveTo(px + cs - b, py); ctx.lineTo(px + cs, py); ctx.lineTo(px + cs, py + b);
+    ctx.moveTo(px, py + cs - b); ctx.lineTo(px, py + cs); ctx.lineTo(px + b, py + cs);
+    ctx.moveTo(px + cs - b, py + cs); ctx.lineTo(px + cs, py + cs); ctx.lineTo(px + cs, py + cs - b);
     ctx.stroke();
     ctx.restore();
   },
 
   attachEvents() {
-    const handlePick = (e) => {
-      e.preventDefault();
+    const getPos = (e) => {
       const rect = this.canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const scaleX = this.canvas.width / rect.width;
       const scaleY = this.canvas.height / rect.height;
+      return {
+        x: Math.floor((clientX - rect.left) * scaleX / this.cellSize),
+        y: Math.floor((clientY - rect.top) * scaleY / this.cellSize)
+      };
+    };
 
-      const x = Math.floor((clientX - rect.left) * scaleX / this.ts);
-      const y = Math.floor((clientY - rect.top) * scaleY / this.ts);
+    const handlePick = (e) => {
+      e.preventDefault();
+      const p = getPos(e);
+      if (p.x >= 0 && p.x < 16 && p.y >= 0 && p.y < 16) {
+        CastleBuilder.handleTileClick(p.x, p.y, App.currentZ);
+      }
+    };
 
-      if (x >= 0 && x < 16 && y >= 0 && y < 16) {
-        CastleBuilder.handleTileClick(x, y, App.currentZ);
+    const handleHover = (e) => {
+      const p = getPos(e);
+      if (p.x >= 0 && p.x < 16 && p.y >= 0 && p.y < 16) {
+        const posEl = document.getElementById("canvas-cursor-pos");
+        if (posEl) posEl.innerText = `X: ${p.x.toString().padStart(2, '0')}, Y: ${p.y.toString().padStart(2, '0')} (Z: ${App.currentZ})`;
       }
     };
 
     this.canvas.addEventListener("click", handlePick);
     this.canvas.addEventListener("touchstart", handlePick, { passive: false });
+    this.canvas.addEventListener("mousemove", handleHover);
   }
 };
 
-// --- ACTION BRUSH & CASTLE BUILDER ENGINE ---
+// --- BLUEPRINT ACTION ENGINE ---
 window.CastleBuilder = {
   activeBrush: "inspect",
 
   setBrush(brushId) {
     App.Audio.click();
     this.activeBrush = brushId;
-    document.querySelectorAll('.brush-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
     
-    const activeBtn = document.getElementById(`brush-${brushId.replace('farm_', '')}`);
+    const activeBtn = document.getElementById(`tb-${brushId}`);
     if (activeBtn) activeBtn.classList.add('active');
   },
 
@@ -1253,13 +1309,13 @@ window.CastleBuilder = {
     if (this.activeBrush === "inspect") {
       App.Audio.click();
       this.updateInspectorUI(tile);
-    } else if (this.activeBrush === "curtain_wall") {
+    } else if (this.activeBrush === "wall") {
       this.buildStructureDirect("curtain_wall", tile);
     } else if (this.activeBrush === "hovel") {
       this.buildStructureDirect("hovel", tile);
-    } else if (this.activeBrush === "farm_wheat") {
+    } else if (this.activeBrush === "wheat") {
       this.plantCropDirect("wheat", tile);
-    } else if (this.activeBrush === "farm_peas") {
+    } else if (this.activeBrush === "peas") {
       this.plantCropDirect("peas", tile);
     } else if (this.activeBrush === "demolish") {
       this.demolishDirect(tile);
@@ -1280,7 +1336,7 @@ window.CastleBuilder = {
     if (entry.requiresBelow) {
       const below = window.KEEP_GRID[`${tile.x}_${tile.y}_${tile.z - 1}`];
       if (!below || below.tileId !== entry.requiresBelow) {
-        App.log(`Foundation missing: ${entry.name} requires ${entry.requiresBelow} directly beneath.`, "notice");
+        App.log(`Foundation error: ${entry.name} requires ${entry.requiresBelow} directly beneath on Level ${tile.z - 1}.`, "notice");
         App.Audio.stone();
         return;
       }
@@ -1292,7 +1348,7 @@ window.CastleBuilder = {
     const gCost = cost.gold || 0;
 
     if (CrownState.treasury.dressedStone < sCost || CrownState.treasury.timber < tCost || CrownState.treasury.gold < gCost) {
-      App.log(`Insufficient resources for ${entry.name} (${sCost}S, ${tCost}T, ${gCost}G needed).`, "notice");
+      App.log(`Need: ${sCost} Stone, ${tCost} Timber, ${gCost} Gold.`, "notice");
       return;
     }
 
@@ -1305,7 +1361,7 @@ window.CastleBuilder = {
     tile.growthStage = 0;
 
     App.Audio.hammer();
-    App.log(`Constructed ${entry.name} at [${tile.x}, ${tile.y}, Level ${tile.z}].`, "royal");
+    App.log(`Raised ${entry.name} at [${tile.x}, ${tile.y}, Z: ${tile.z}].`, "royal");
     SimulationEngine.updateHUD();
     SimulationEngine.save();
     this.updateInspectorUI(tile);
@@ -1313,7 +1369,7 @@ window.CastleBuilder = {
 
   plantCropDirect(cropId, tile) {
     if (tile.z !== 0) {
-      App.log("Crops may only be sown in the Ground Bailey (Level 0).", "notice");
+      App.log("Crops require Ground Bailey loam (Level 0).", "notice");
       return;
     }
     tile.tileId = "tilled_field";
@@ -1330,7 +1386,7 @@ window.CastleBuilder = {
     if (tile.z < 2) {
       const above = window.KEEP_GRID[`${tile.x}_${tile.y}_${tile.z + 1}`];
       if (above && above.tileId && !above.tileId.startsWith("open_air")) {
-        App.log("Cannot demolish: an upper chamber rests upon this foundation!", "notice");
+        App.log("Cannot raze: upper battlements rely upon this structural base!", "notice");
         App.Audio.stone();
         return;
       }
@@ -1347,7 +1403,7 @@ window.CastleBuilder = {
     tile.growthStage = 0;
 
     App.Audio.stone();
-    App.log(`Demolished structure at [${tile.x}, ${tile.y}]. Salvaged materials recovered.`, "notice");
+    App.log(`Demolished cell at [${tile.x}, ${tile.y}]. Salvaged 50% materials.`, "notice");
     SimulationEngine.updateHUD();
     SimulationEngine.save();
     this.updateInspectorUI(tile);
@@ -1361,7 +1417,7 @@ window.CastleBuilder = {
     const serf = window.SerfRoster.find(s => s.x === tile.x && s.y === tile.y && s.z === tile.z);
 
     let html = `
-      <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 6px; margin-bottom: 6px;">
+      <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 5px; margin-bottom: 6px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <strong style="color: var(--cyan);">[${tile.x}, ${tile.y}] ${entry.name}</strong>
           <span class="badge badge-silver">Level ${tile.z}</span>
@@ -1369,21 +1425,21 @@ window.CastleBuilder = {
         <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
           Soil Fertility: ${Math.round((tile.soilFertility || 0) * 100)}% | Nitrogen: ${Math.round((tile.soilNitrogen || 0) * 100)}%
         </div>
-        ${serf ? `<div style="color: var(--mint); font-size: 11px; margin-top: 3px;">• Stationed: <strong>${serf.name}</strong> (${serf.caste}, ${serf.task})</div>` : ''}
+        ${serf ? `<div style="color: var(--mint); font-size: 10px; margin-top: 2px;">• Assigned Household: <strong>${serf.name}</strong> (${serf.caste})</div>` : ''}
       </div>
-      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
     `;
 
     if (tile.z === 0) {
       if (tile.tileId === "loam" || tile.tileId === "tilled_field") {
         html += `
-          <button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructureDirect('curtain_wall', CrownState.selectedKeepTile)">Raise Wall (15S)</button>
-          <button class="btn btn-sm" onclick="CastleBuilder.buildStructureDirect('hovel', CrownState.selectedKeepTile)">Build Hovel (15T/5G)</button>
+          <button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructureDirect('curtain_wall', CrownState.selectedKeepTile)">Wall (15S)</button>
+          <button class="btn btn-sm" onclick="CastleBuilder.buildStructureDirect('hovel', CrownState.selectedKeepTile)">Hovel (15T/5G)</button>
           <button class="btn btn-sm btn-mint" onclick="CastleBuilder.plantCropDirect('wheat', CrownState.selectedKeepTile)">Sow Wheat</button>
           <button class="btn btn-sm btn-mint" onclick="CastleBuilder.plantCropDirect('peas', CrownState.selectedKeepTile)">Sow Peas</button>
         `;
       } else {
-        html += `<button class="btn btn-sm" onclick="CastleBuilder.demolishDirect(CrownState.selectedKeepTile)">Demolish Structure</button>`;
+        html += `<button class="btn btn-sm" onclick="CastleBuilder.demolishDirect(CrownState.selectedKeepTile)">Raze Structure</button>`;
       }
     } else if (tile.z === 1) {
       if (tile.tileId.startsWith("open_air")) {
@@ -1391,6 +1447,12 @@ window.CastleBuilder = {
           <button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructureDirect('rampart_walk', CrownState.selectedKeepTile)">Ramparts (10S/10T)</button>
           <button class="btn btn-sm" onclick="CastleBuilder.buildStructureDirect('guard_turret', CrownState.selectedKeepTile)">Turret (20S)</button>
         `;
+      } else {
+        html += `<button class="btn btn-sm" onclick="CastleBuilder.demolishDirect(CrownState.selectedKeepTile)">Demolish</button>`;
+      }
+    } else if (tile.z === 2) {
+      if (tile.tileId.startsWith("open_air")) {
+        html += `<button class="btn btn-sm btn-cyan" onclick="CastleBuilder.buildStructureDirect('high_spire', CrownState.selectedKeepTile)">Ashlar Spire (40S/60G)</button>`;
       } else {
         html += `<button class="btn btn-sm" onclick="CastleBuilder.demolishDirect(CrownState.selectedKeepTile)">Demolish</button>`;
       }
@@ -1410,11 +1472,11 @@ window.CastleBuilder = {
   }
 };
 
-// --- OVERLAND REALM RENDERER ---
+// --- REALM 8x8 CANVAS RENDERER ---
 window.RealmRenderer = {
   canvas: null,
   ctx: null,
-  ts: 47.5, // 380 / 8
+  cs: 48, // 8 * 48 = 384px
 
   init() {
     this.canvas = document.getElementById("realmCanvas");
@@ -1427,8 +1489,8 @@ window.RealmRenderer = {
   render() {
     if (!this.ctx) return;
     const ctx = this.ctx;
-    const ts = this.ts;
-    ctx.clearRect(0, 0, 380, 380);
+    const cs = this.cs;
+    ctx.clearRect(0, 0, 384, 384);
 
     let annexed = 0;
 
@@ -1436,37 +1498,38 @@ window.RealmRenderer = {
       for (let rx = 0; rx < 8; rx++) {
         const prov = window.REALM_PROVINCES[`${rx}_${ry}`];
         if (!prov) continue;
-        const px = rx * ts;
-        const py = ry * ts;
+        const px = rx * cs;
+        const py = ry * cs;
 
         if (prov.status === "annexed") annexed++;
 
         if (prov.status === "uncharted") {
-          ctx.fillStyle = "#070a10";
-          ctx.fillRect(px, py, ts, ts);
-          ctx.strokeStyle = "rgba(255,255,255,0.04)";
-          ctx.strokeRect(px, py, ts, ts);
-          ctx.fillStyle = "rgba(148, 163, 184, 0.25)";
+          ctx.fillStyle = "#070c14";
+          ctx.fillRect(px, py, cs, cs);
+          ctx.strokeStyle = "#132238";
+          ctx.strokeRect(px + 0.5, py + 0.5, cs, cs);
+
+          ctx.fillStyle = "rgba(130, 149, 173, 0.25)";
           ctx.font = "14px monospace";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText("?", px + ts / 2, py + ts / 2);
+          ctx.fillText("?", px + cs / 2, py + cs / 2);
         } else {
           ctx.fillStyle = prov.color + (prov.status === "annexed" ? "33" : "15");
-          ctx.fillRect(px, py, ts, ts);
-          ctx.strokeStyle = (prov.status === "annexed") ? "#38bdf8" : "rgba(148, 163, 184, 0.25)";
+          ctx.fillRect(px, py, cs, cs);
+          ctx.strokeStyle = (prov.status === "annexed") ? "#38bdf8" : "#243b5a";
           ctx.lineWidth = (prov.status === "annexed") ? 2 : 1;
-          ctx.strokeRect(px + 1, py + 1, ts - 2, ts - 2);
+          ctx.strokeRect(px + 1, py + 1, cs - 2, cs - 2);
 
-          ctx.fillStyle = (prov.status === "annexed") ? "#38bdf8" : "#94a3b8";
+          ctx.fillStyle = (prov.status === "annexed") ? "#38bdf8" : "#8295ad";
           ctx.font = "16px sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText(prov.icon, px + ts / 2, py + ts / 2 - 5);
+          ctx.fillText(prov.icon, px + cs / 2, py + cs / 2 - 5);
 
-          ctx.fillStyle = (prov.status === "annexed") ? "#ffffff" : "#64748b";
-          ctx.font = "bold 8px sans-serif";
-          ctx.fillText(prov.name.split(" ")[0], px + ts / 2, py + ts / 2 + 13);
+          ctx.fillStyle = (prov.status === "annexed") ? "#ffffff" : "#8295ad";
+          ctx.font = "bold 8px monospace";
+          ctx.fillText(prov.name.split(" ")[0], px + cs / 2, py + cs / 2 + 13);
         }
       }
     }
@@ -1478,7 +1541,7 @@ window.RealmRenderer = {
       const sp = CrownState.selectedRealmProvince;
       ctx.strokeStyle = "#34d399";
       ctx.lineWidth = 2.5;
-      ctx.strokeRect(sp.x * ts + 2, sp.y * ts + 2, ts - 4, ts - 4);
+      ctx.strokeRect(sp.x * cs + 2, sp.y * cs + 2, cs - 4, cs - 4);
     }
   },
 
@@ -1491,8 +1554,8 @@ window.RealmRenderer = {
       const scaleX = this.canvas.width / rect.width;
       const scaleY = this.canvas.height / rect.height;
 
-      const rx = Math.floor((clientX - rect.left) * scaleX / this.ts);
-      const ry = Math.floor((clientY - rect.top) * scaleY / this.ts);
+      const rx = Math.floor((clientX - rect.left) * scaleX / this.cs);
+      const ry = Math.floor((clientY - rect.top) * scaleY / this.cs);
 
       if (rx >= 0 && rx < 8 && ry >= 0 && ry < 8) {
         App.Audio.click();
@@ -1512,7 +1575,7 @@ window.RealmRenderer = {
     if (!container || !prov) return;
 
     let html = `
-      <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 6px; margin-bottom: 6px;">
+      <div style="border-bottom: 1px solid var(--card-border); padding-bottom: 5px; margin-bottom: 6px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <strong style="color: var(--cyan);">${prov.name}</strong>
           <span class="badge ${prov.status === 'annexed' ? 'badge-mint' : 'badge-silver'}">${prov.status.toUpperCase()}</span>
@@ -1521,23 +1584,23 @@ window.RealmRenderer = {
           Biome: <strong>${prov.biomeName}</strong> • Boon: <span style="color: var(--mint);">${prov.boon}</span>
         </div>
         <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
-          Weekly Tribute: +${prov.yields.grain} Grain, +${prov.yields.timber} Timber, +${prov.yields.stone} Stone, +${prov.yields.gold} Gold
+          Weekly Yield: +${prov.yields.grain} Grain, +${prov.yields.timber} Timber, +${prov.yields.stone} Stone, +${prov.yields.gold} Gold
         </div>
       </div>
     `;
 
     if (prov.status === "uncharted") {
-      html += `<button class="btn btn-sm btn-cyan" onclick="RealmRenderer.surveyProvince(${prov.x}, ${prov.y})">Send Royal Surveyors (25g)</button>`;
+      html += `<button class="btn btn-sm btn-cyan" onclick="RealmRenderer.surveyProvince(${prov.x}, ${prov.y})">Dispatch Royal Surveyors (25g)</button>`;
     } else if (prov.status === "surveyed") {
       html += `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px;">
           <span>Crown Charter Cost:</span>
           <strong>${prov.charterCostGold}g &amp; ${prov.charterCostRenown} Renown</strong>
         </div>
-        <button class="btn btn-sm btn-cyan" onclick="RealmRenderer.annexProvince(${prov.x}, ${prov.y})">Annex Province by Crown Charter</button>
+        <button class="btn btn-sm btn-cyan" onclick="RealmRenderer.annexProvince(${prov.x}, ${prov.y})">Annex Province to Crown</button>
       `;
     } else {
-      html += `<div style="font-size: 11px; color: var(--mint);">This sovereign territory is firmly annexed and paying tribute.</div>`;
+      html += `<div style="font-size: 11px; color: var(--mint);">This territory is firmly incorporated into your Crown demesne.</div>`;
     }
 
     container.innerHTML = html;
@@ -1545,7 +1608,7 @@ window.RealmRenderer = {
 
   surveyProvince(rx, ry) {
     if (CrownState.treasury.gold < 25) {
-      App.log("Need 25 gold to dispatch royal cartographers.", "notice");
+      App.log("Need 25 gold for surveyors.", "notice");
       return;
     }
     CrownState.treasury.gold -= 25;
@@ -1553,7 +1616,7 @@ window.RealmRenderer = {
     prov.status = "surveyed";
 
     App.Audio.gold();
-    App.log(`Surveyors mapped ${prov.name}.`, "notice");
+    App.log(`Mapped geography of ${prov.name}.`, "notice");
     SimulationEngine.updateHUD();
     SimulationEngine.save();
     this.render();
@@ -1565,7 +1628,7 @@ window.RealmRenderer = {
     if (!prov) return;
 
     if (CrownState.treasury.gold < prov.charterCostGold || CrownState.crown.renownPoints < prov.charterCostRenown) {
-      App.log(`Charter rejected: ${prov.charterCostGold}g & ${prov.charterCostRenown} Renown required.`, "notice");
+      App.log(`Charter rejected: Need ${prov.charterCostGold}g & ${prov.charterCostRenown} Renown.`, "notice");
       App.Audio.stone();
       return;
     }
@@ -1573,16 +1636,15 @@ window.RealmRenderer = {
     CrownState.treasury.gold -= prov.charterCostGold;
     prov.status = "annexed";
 
-    // Reveal neighbors
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
-        const neighbor = window.REALM_PROVINCES[`${rx + dx}_${ry + dy}`];
-        if (neighbor && neighbor.status === "uncharted") neighbor.status = "surveyed";
+        const n = window.REALM_PROVINCES[`${rx + dx}_${ry + dy}`];
+        if (n && n.status === "uncharted") n.status = "surveyed";
       }
     }
 
     App.Audio.fanfare();
-    App.log(`Charter granted: ${prov.name} is now incorporated into your realm!`, "royal");
+    App.log(`Charter issued: ${prov.name} is now Crown territory!`, "royal");
     SimulationEngine.updateHUD();
     SimulationEngine.save();
     this.render();
@@ -1617,24 +1679,11 @@ window.SimulationEngine = {
     const curSeason = this.SEASONS[C.meta.seasonIdx];
     if (seasonShift) App.log(`The realm enters ${curSeason}. Year ${C.meta.year}.`, "royal");
 
-    // 1. Agriculture
     this.resolveFarming(curSeason);
-
-    // 2. Labor & Extraction
     this.resolveLabor();
-
-    // 3. Granary & Spoilage
-    this.resolveGranary(curSeason);
-
-    // 4. Corvée & Taxation
+    this.resolveGranary();
     this.resolveTaxes();
-
-    // 5. Ventures & Trade
     VentureEngine.processVentures();
-    CaravanExchange.updatePrices();
-    ArtisanPetitions.checkPetitions();
-
-    // 6. Renown & Migration
     this.resolveRenown();
 
     this.updateHUD();
@@ -1674,7 +1723,7 @@ window.SimulationEngine = {
 
     if (harvestedGrain > 0) {
       C.treasury.grain += harvestedGrain;
-      App.log(`Harvest completed: +${harvestedGrain} bushels of grain brought to granary.`, "harvest");
+      App.log(`Harvest concluded: +${harvestedGrain} bushels of grain brought to keep.`, "harvest");
       App.Audio.harvest();
     }
   },
@@ -1702,7 +1751,7 @@ window.SimulationEngine = {
     }
   },
 
-  resolveGranary(season) {
+  resolveGranary() {
     const C = window.CrownState;
     const need = window.SerfRoster.length;
 
@@ -1716,7 +1765,6 @@ window.SimulationEngine = {
       App.log("Granary deficit! Rationing imposed upon serf households.", "notice");
     }
 
-    // Vault check
     let hasVault = false;
     for (let k in window.KEEP_GRID) {
       if (window.KEEP_GRID[k].z === -1 && window.KEEP_GRID[k].tileId === "stone_granary_base") {
@@ -1732,7 +1780,7 @@ window.SimulationEngine = {
     if (C.meta.weekTick === 4) {
       const tax = Math.ceil(window.SerfRoster.length / 2) * C.taxation.hearthTaxGold;
       C.treasury.gold += tax;
-      App.log(`Seasonal hearth tax collected: +${tax} gold.`, "royal");
+      App.log(`Hearth tax gathered: +${tax} gold.`, "royal");
       App.Audio.gold();
     }
     if (C.taxation.corveeDaysOwed > 3) {
@@ -1748,6 +1796,7 @@ window.SimulationEngine = {
       if (tid === "curtain_wall") masonry += 2;
       if (tid === "royal_keep") masonry += 25;
       if (tid === "high_spire") masonry += 30;
+      if (tid === "solar_chamber") masonry += 15;
     }
     let annexed = 0;
     for (let p in window.REALM_PROVINCES) if (window.REALM_PROVINCES[p].status === "annexed") annexed += 20;
@@ -1769,7 +1818,7 @@ window.SimulationEngine = {
   updateHUD() {
     const C = window.CrownState;
     const season = this.SEASONS[C.meta.seasonIdx];
-    document.getElementById("hud-season-year").innerText = `${season} (Wk ${C.meta.weekTick}), Yr ${C.meta.year}`;
+    document.getElementById("hud-season-year").innerText = `${season} (W${C.meta.weekTick}) Y${C.meta.year}`;
     document.getElementById("hud-renown").innerText = `${C.crown.prestigeTier} (${C.crown.renownPoints})`;
     document.getElementById("hud-gold").innerText = `${C.treasury.gold}g`;
     document.getElementById("hud-grain").innerText = `${C.treasury.grain}b`;
@@ -1780,7 +1829,7 @@ window.SimulationEngine = {
 
   save() {
     try {
-      localStorage.setItem("throne_plow_save_v2", JSON.stringify({
+      localStorage.setItem("throne_plow_blueprint_save", JSON.stringify({
         crownState: window.CrownState,
         serfRoster: window.SerfRoster,
         keepGrid: window.KEEP_GRID,
@@ -1791,7 +1840,7 @@ window.SimulationEngine = {
 
   load() {
     try {
-      const raw = localStorage.getItem("throne_plow_save_v2");
+      const raw = localStorage.getItem("throne_plow_blueprint_save");
       if (raw) {
         const d = JSON.parse(raw);
         if (d.crownState) Object.assign(window.CrownState, d.crownState);
@@ -1803,12 +1852,12 @@ window.SimulationEngine = {
   },
 
   reset() {
-    localStorage.removeItem("throne_plow_save_v2");
+    localStorage.removeItem("throne_plow_blueprint_save");
     location.reload();
   }
 };
 
-// --- CROWN VENTURES & GUILD ENTERPRISES ---
+// --- CROWN VENTURES & GUILDS ---
 window.VentureEngine = {
   ventures: {
     brewery: { name: "Crown Malthouse & Brewhouse", level: 1, maxLevel: 4, workers: 1, cost: { stone: 20, timber: 25, gold: 40 }, yieldText: "+2 Ale, +2g / Wk" },
@@ -1834,7 +1883,7 @@ window.VentureEngine = {
     const v = this.ventures[id];
     const C = window.CrownState;
     if (C.treasury.dressedStone < (v.cost.stone || 0) || C.treasury.timber < (v.cost.timber || 0) || C.treasury.gold < (v.cost.gold || 0)) {
-      App.log("Insufficient treasury funds for charter.", "notice");
+      App.log("Insufficient funds for charter.", "notice");
       return;
     }
     C.treasury.dressedStone -= (v.cost.stone || 0);
@@ -1887,7 +1936,6 @@ window.VentureEngine = {
   }
 };
 
-// --- COMMODITY MARKET ---
 window.CaravanExchange = {
   items: {
     grain: { name: "Grain", buy: 1.4, sell: 0.7 },
@@ -1895,8 +1943,6 @@ window.CaravanExchange = {
     dressedStone: { name: "Stone", buy: 2.2, sell: 1.2 },
     wool: { name: "Wool", buy: 3.5, sell: 2.0 }
   },
-
-  updatePrices() {},
 
   trade(key, isBuy, qty) {
     const C = window.CrownState;
@@ -1909,9 +1955,9 @@ window.CaravanExchange = {
       App.Audio.gold();
     } else {
       if (C.treasury[key] < qty) { App.log("Not enough in stores to consign.", "notice"); return; }
-      const revenue = Math.round(it.sell * qty);
+      const rev = Math.round(it.sell * qty);
       C.treasury[key] -= qty;
-      C.treasury.gold += revenue;
+      C.treasury.gold += rev;
       App.Audio.gold();
     }
     SimulationEngine.updateHUD();
@@ -1936,10 +1982,6 @@ window.CaravanExchange = {
     }
     return rows;
   }
-};
-
-window.ArtisanPetitions = {
-  checkPetitions() {}
 };
 
 // --- DEMESNE AGRARIAN VIEW ---
@@ -1989,7 +2031,7 @@ window.DemesneView = {
   }
 };
 
-// --- SERF ROSTER VIEW ---
+// --- SERF CENSUS VIEW ---
 window.SerfView = {
   render() {
     const container = document.getElementById("serfs-content");
@@ -2015,7 +2057,7 @@ window.SerfView = {
             <strong>${s.name}</strong> <span class="badge ${s.caste === 'villein' ? 'badge-cyan' : 'badge-silver'}">${s.caste}</span><br>
             <span style="font-size: 10px; color: var(--text-muted);">Health: ${s.health}% | Morale: ${s.contentment}%</span>
           </div>
-          <select onchange="SerfView.setTask('${s.id}', this.value)" style="background: var(--card-surface); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 4px; padding: 4px; font-size: 11px;">
+          <select onchange="SerfView.setTask('${s.id}', this.value)" style="background: var(--card-surface); color: var(--text-main); border: 1px solid var(--card-border); border-radius: 4px; padding: 4px; font-size: 10px; font-family: inherit;">
             <option value="plant" ${s.task === 'plant' ? 'selected' : ''}>Sow Crops</option>
             <option value="harvest" ${s.task === 'harvest' ? 'selected' : ''}>Harvest</option>
             <option value="quarry" ${s.task === 'quarry' ? 'selected' : ''}>Quarry Stone</option>
@@ -2041,7 +2083,7 @@ window.SerfView = {
   }
 };
 
-// --- CODEX ---
+// --- CASTELLAN'S CODEX ---
 window.CodexView = {
   render() {
     const container = document.getElementById("codex-content");
@@ -2050,49 +2092,294 @@ window.CodexView = {
     container.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 8px; font-size: 11px; line-height: 1.5;">
         <div class="card">
-          <div class="card-header">Sovereign Architecture</div>
-          <div>• <strong>Level 0:</strong> Bailey ground. Tilled soil for farming, curtain walls for defense, hovels for housing.<br>
-          • <strong>Level +1 &amp; +2:</strong> Ramparts and Spires. Require curtain walls or keep chambers directly beneath.<br>
-          • <strong>Level -1 &amp; -2:</strong> Deep cellars and vaults. Stone granary vaults prevent grain decay.</div>
+          <div class="card-header">Architectural Blueprint Guide</div>
+          <div>• <strong>Level 0 (Bailey):</strong> Ground loam for farming, ashlar curtain walls, hovels.<br>
+          • <strong>Level +1 &amp; +2 (Ramparts &amp; Spires):</strong> Require stone walls or keep chambers directly beneath.<br>
+          • <strong>Level -1 &amp; -2 (Vaults):</strong> Subterranean rock cellars. Silo vaults halve grain spoilage.</div>
         </div>
         <div class="card">
-          <div class="card-header">Three-Field Agrarian System</div>
-          <div>Alternating bread wheat with field peas naturally replenishes soil nitrogen, ensuring robust harvest yields every autumn.</div>
+          <div class="card-header">Three-Field Agrarian Cycle</div>
+          <div>Wheat and barley feed the kingdom but drain soil nitrogen. Field peas fix nitrogen back into the earth, maintaining fertile yields without artificial fertilizers.</div>
         </div>
       </div>
     `;
   }
 };
 
-// --- GOD MODE ---
+// --- FEATURE-PACKED DIVINE SOVEREIGN CONSOLE (GOD MODE) ---
 window.GodMode = {
   render() {
     const container = document.getElementById("god-content");
     if (!container) return;
 
     container.innerHTML = `
-      <div class="card" style="margin-bottom: 8px;">
-        <div class="card-header" style="color: var(--cyan);">Royal Grants</div>
+      <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px;">
+        Divine sovereign directives bypass resource costs, manipulate reality, and execute instant architectural blueprints.
+      </div>
+
+      <!-- INSTANT ARCHITECTURAL PRESETS -->
+      <div class="card" style="border-color: var(--cyan); margin-bottom: 8px;">
+        <div class="card-header" style="color: var(--cyan);">Instant Blueprint Presets</div>
+        <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">1-Click layout generators:</div>
+        <div class="btn-group" style="margin-bottom: 6px;">
+          <button class="btn btn-sm btn-cyan" onclick="GodMode.buildConcentricCitadel()">Concentric Citadel</button>
+          <button class="btn btn-sm btn-cyan" onclick="GodMode.buildGrandDemesne()">Grand Three-Field Demesne</button>
+        </div>
         <div class="btn-group">
-          <button class="btn btn-sm btn-cyan" onclick="GodMode.grant('gold', 1000)">+1,000 Gold</button>
-          <button class="btn btn-sm btn-cyan" onclick="GodMode.grant('grain', 2000)">+2,000 Grain</button>
-          <button class="btn btn-sm btn-cyan" onclick="GodMode.grant('dressedStone', 500)">+500 Stone</button>
-          <button class="btn btn-sm btn-cyan" onclick="GodMode.grant('timber', 500)">+500 Timber</button>
+          <button class="btn btn-sm" onclick="GodMode.excavateAllVaults()">Excavate All Vaults</button>
+          <button class="btn btn-sm" style="color: var(--danger);" onclick="GodMode.wipeGridLoam()">Wipe Grid to Virgin Loam</button>
         </div>
       </div>
-      <button class="btn btn-sm" onclick="SimulationEngine.reset()" style="color: var(--text-muted); width: 100%;">Reset Reign &amp; Save State</button>
+
+      <!-- DIVINE TREASURY BLESSINGS -->
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header" style="color: var(--gold);">Treasury Blessings</div>
+        <div class="btn-group-3" style="margin-bottom: 6px;">
+          <button class="btn btn-sm btn-gold" onclick="GodMode.grant('gold', 5000)">+5,000 Gold</button>
+          <button class="btn btn-sm btn-cyan" onclick="GodMode.grant('grain', 5000)">+5,000 Grain</button>
+          <button class="btn btn-sm" onclick="GodMode.grant('dressedStone', 1000)">+1,000 Stone</button>
+        </div>
+        <div class="btn-group-3">
+          <button class="btn btn-sm" onclick="GodMode.grant('timber', 1000)">+1,000 Timber</button>
+          <button class="btn btn-sm" onclick="GodMode.grant('ale', 500)">+500 Ale</button>
+          <button class="btn btn-sm" onclick="GodMode.grant('ironBloom', 500)">+500 Iron</button>
+        </div>
+      </div>
+
+      <!-- CELESTIAL AUTHORITY & CITIZENS -->
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header" style="color: var(--mint);">Authority &amp; Serfdom</div>
+        <div class="btn-group" style="margin-bottom: 6px;">
+          <button class="btn btn-sm btn-mint" onclick="GodMode.maxMorale()">Max Morale (100%)</button>
+          <button class="btn btn-sm btn-mint" onclick="GodMode.instantMonarch()">Rank: Grand Monarch</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm" onclick="GodMode.spawnSerfs(5)">Summon 5 Households</button>
+          <button class="btn btn-sm" onclick="GodMode.instantHarvest()">Instant Crop Ripening</button>
+        </div>
+      </div>
+
+      <!-- TIME & REALM OMNISCIENCE -->
+      <div class="card" style="margin-bottom: 8px;">
+        <div class="card-header">Time &amp; Realm Omniscience</div>
+        <div class="btn-group-3" style="margin-bottom: 6px;">
+          <button class="btn btn-sm" onclick="GodMode.setSeason(0)">Spring</button>
+          <button class="btn btn-sm" onclick="GodMode.setSeason(1)">Summer</button>
+          <button class="btn btn-sm" onclick="GodMode.setSeason(2)">Autumn</button>
+        </div>
+        <div class="btn-group" style="margin-bottom: 6px;">
+          <button class="btn btn-sm" onclick="GodMode.setSeason(3)">Winter</button>
+          <button class="btn btn-sm btn-cyan" onclick="GodMode.fastForward(12)">Advance 1 Season (4 Wks)</button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-cyan" onclick="GodMode.revealRealm()">Reveal All 64 Provinces</button>
+          <button class="btn btn-sm btn-gold" onclick="GodMode.annexAllRealm()">Annex Entire Overland Realm</button>
+        </div>
+      </div>
+
+      <!-- FACTORY RESET -->
+      <button class="btn btn-sm" onclick="SimulationEngine.reset()" style="color: var(--text-muted); width: 100%;">
+        Hard Reset Save State &amp; Reload
+      </button>
     `;
   },
 
-  grant(k, amt) {
-    CrownState.treasury[k] += amt;
+  grant(key, amt) {
+    CrownState.treasury[key] += amt;
     App.Audio.gold();
+    App.log(`[DIVINE DECREE] Granted +${amt} ${key}.`, "royal");
     SimulationEngine.updateHUD();
     SimulationEngine.save();
+    this.render();
+  },
+
+  maxMorale() {
+    CrownState.crown.contentment = 100;
+    window.SerfRoster.forEach(s => {
+      s.health = 100;
+      s.nourishment = 100;
+      s.contentment = 100;
+    });
+    App.Audio.fanfare();
+    App.log(`[DIVINE DECREE] Realm contentment and vitality elevated to 100%.`, "royal");
+    SimulationEngine.save();
+  },
+
+  instantMonarch() {
+    CrownState.crown.renownPoints = 2500;
+    CrownState.crown.prestigeTier = "Grand Monarch";
+    App.Audio.fanfare();
+    App.log(`[DIVINE DECREE] The Crown ascends directly to Grand Monarch!`, "royal");
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+  },
+
+  spawnSerfs(count) {
+    for (let i = 0; i < count; i++) {
+      window.SerfRoster.push({
+        id: "s_god_" + Date.now() + "_" + i,
+        name: "Freeman Settler " + (window.SerfRoster.length + 1),
+        caste: "villein",
+        task: "plant",
+        health: 100,
+        nourishment: 100,
+        contentment: 100,
+        draftOx: true,
+        x: 3, y: 3, z: 0
+      });
+    }
+    App.Audio.fanfare();
+    App.log(`[DIVINE DECREE] Summoned ${count} freeman households with draft ox teams.`, "royal");
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+  },
+
+  instantHarvest() {
+    for (let k in window.KEEP_GRID) {
+      const t = window.KEEP_GRID[k];
+      if (t.z === 0 && t.crop) {
+        t.growthStage = 4;
+      }
+    }
+    App.Audio.harvest();
+    App.log(`[DIVINE DECREE] All demesne crops instantly brought to golden harvest maturity!`, "harvest");
+    SimulationEngine.save();
+    KeepRenderer.render();
+  },
+
+  setSeason(idx) {
+    CrownState.meta.seasonIdx = idx;
+    CrownState.meta.weekTick = 1;
+    App.Audio.chime();
+    App.log(`[DIVINE DECREE] Realm shifted into ${SimulationEngine.SEASONS[idx]}.`, "notice");
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    KeepRenderer.render();
+  },
+
+  fastForward(weeks) {
+    for (let i = 0; i < weeks; i++) {
+      SimulationEngine.advance();
+    }
+    App.Audio.fanfare();
+    App.log(`[DIVINE DECREE] Time warped forward by ${weeks} weeks.`, "royal");
+  },
+
+  revealRealm() {
+    for (let k in window.REALM_PROVINCES) {
+      if (window.REALM_PROVINCES[k].status === "uncharted") {
+        window.REALM_PROVINCES[k].status = "surveyed";
+      }
+    }
+    App.Audio.fanfare();
+    App.log(`[DIVINE DECREE] Fog of War lifted across all 64 realm provinces!`, "royal");
+    SimulationEngine.save();
+    RealmRenderer.render();
+  },
+
+  annexAllRealm() {
+    for (let k in window.REALM_PROVINCES) {
+      window.REALM_PROVINCES[k].status = "annexed";
+    }
+    App.Audio.fanfare();
+    App.log(`[DIVINE DECREE] All 64 provinces annexed under Crown rule!`, "royal");
+    SimulationEngine.updateHUD();
+    SimulationEngine.save();
+    RealmRenderer.render();
+  },
+
+  buildConcentricCitadel() {
+    // 1. Level 0: Outer Ashlar Ring & Corner Turrets
+    for (let x = 3; x <= 12; x++) {
+      for (let y = 3; y <= 12; y++) {
+        const isWall = (x === 3 || x === 12 || y === 3 || y === 12);
+        const k0 = `${x}_${y}_0`;
+        const k1 = `${x}_${y}_1`;
+        const k2 = `${x}_${y}_2`;
+
+        if (isWall) {
+          window.KEEP_GRID[k0].tileId = "curtain_wall";
+          window.KEEP_GRID[k0].crop = null;
+          window.KEEP_GRID[k1].tileId = "rampart_walk";
+          // Corner spires
+          if ((x === 3 || x === 12) && (y === 3 || y === 12)) {
+            window.KEEP_GRID[k1].tileId = "guard_turret";
+            window.KEEP_GRID[k2].tileId = "high_spire";
+          }
+        }
+      }
+    }
+
+    // Keep Core
+    window.KEEP_GRID["7_7_0"].tileId = "royal_keep";
+    window.KEEP_GRID["8_7_0"].tileId = "royal_keep";
+    window.KEEP_GRID["7_8_0"].tileId = "royal_keep";
+    window.KEEP_GRID["8_8_0"].tileId = "royal_keep";
+
+    window.KEEP_GRID["7_7_1"].tileId = "solar_chamber";
+    window.KEEP_GRID["8_7_1"].tileId = "solar_chamber";
+    window.KEEP_GRID["7_8_1"].tileId = "solar_chamber";
+    window.KEEP_GRID["8_8_1"].tileId = "solar_chamber";
+
+    window.KEEP_GRID["7_7_2"].tileId = "astronomy_turret";
+
+    App.Audio.fanfare();
+    App.log(`[DIVINE ARCHITECT] Raised Concentric Citadel with outer ramparts and spires!`, "royal");
+    SimulationEngine.save();
+    KeepRenderer.render();
+  },
+
+  buildGrandDemesne() {
+    for (let y = 1; y <= 14; y++) {
+      for (let x = 1; x <= 5; x++) {
+        const key = `${x}_${y}_0`;
+        window.KEEP_GRID[key].tileId = "tilled_field";
+        window.KEEP_GRID[key].soilFertility = 1.0;
+        window.KEEP_GRID[key].soilNitrogen = 1.0;
+        window.KEEP_GRID[key].growthStage = 3;
+        window.KEEP_GRID[key].crop = (y % 3 === 0) ? "wheat" : ((y % 3 === 1) ? "peas" : "barley");
+      }
+    }
+    App.Audio.harvest();
+    App.log(`[DIVINE ARCHITECT] Established Grand Demesne with optimal three-field rotation!`, "harvest");
+    SimulationEngine.save();
+    KeepRenderer.render();
+  },
+
+  excavateAllVaults() {
+    for (let x = 5; x <= 10; x++) {
+      for (let y = 5; y <= 10; y++) {
+        window.KEEP_GRID[`${x}_${y}_-1`].tileId = "stone_granary_base";
+        window.KEEP_GRID[`${x}_${y}_-2`].tileId = (x === 5 && y === 5) ? "treasury_vault" : ((x === 10 && y === 10) ? "cistern" : "vault_floor");
+      }
+    }
+    App.Audio.stone();
+    App.log(`[DIVINE ARCHITECT] Excavated subterranean stone silos and bedrock treasury vaults!`, "royal");
+    SimulationEngine.save();
+    KeepRenderer.render();
+  },
+
+  wipeGridLoam() {
+    for (let z = -2; z <= 2; z++) {
+      for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+          const key = `${x}_${y}_${z}`;
+          window.KEEP_GRID[key].tileId = (z === 0) ? "loam" : ((z < 0) ? "cellar_dirt" : "open_air_" + z);
+          window.KEEP_GRID[key].crop = null;
+          window.KEEP_GRID[key].growthStage = 0;
+          window.KEEP_GRID[key].soilFertility = 0.9;
+          window.KEEP_GRID[key].soilNitrogen = 0.8;
+        }
+      }
+    }
+    App.Audio.stone();
+    App.log(`[DIVINE ARCHITECT] Cleared entire spatial matrix back to clean virgin loam graph paper.`, "notice");
+    SimulationEngine.save();
+    KeepRenderer.render();
   }
 };
 
-// --- BOOTSTRAP INITIALIZATION ---
+// --- INITIALIZATION ---
 window.addEventListener("DOMContentLoaded", () => {
   SimulationEngine.load();
   KeepRenderer.init();
